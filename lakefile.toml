@@ -1,0 +1,10 @@
+name = "batteries-kmp"
+defaultTargets = ["BatteriesKMP"]
+
+[[lean_lib]]
+name = "BatteriesKMP"
+
+[[require]]
+name = "batteries"
+git = "https://github.com/leanprover-community/batteries"
+rev = "main"

@@ -1,0 +1,64 @@
+# Update `lean-toolchain` in `main`
+
+name: Update Toolchain
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 1/8 * * *'
+
+jobs:
+  update-toolchain:
+    name: update toolchain
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v6
+        with:
+          ref: nightly-testing
+
+      - name: git config
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+
+      - name: update lean-toolchain
+        id: toolchain
+        run: |
+          # get toolchain from batteries/main
+          curl -L -O "https://raw.githubusercontent.com/leanprover-community/batteries/main/lean-toolchain"
+          echo "name=$(cut -d ':' -f2 lean-toolchain | tr -d '\n')" >> $GITHUB_OUTPUT
+          # check if toolchain has been updated
+          git fetch origin main --depth=1
+          if git diff --quiet origin/main -- "lean-toolchain"; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: install toolchain
+        if: steps.toolchain.outputs.changed == 'true'
+        uses: leanprover/lean-action@v1
+        with:
+          auto-config: false # don't do anything
+          use-github-cache: false # no caching since we don't build
+
+      - name: update dependencies
+        if: steps.toolchain.outputs.changed == 'true'
+        run: lake update --keep-toolchain batteries
+
+      - name: prepare commit
+        if: steps.toolchain.outputs.changed == 'true'
+        run: git add lean-toolchain lake-manifest.json
+
+      - name: create pull request
+        if: steps.toolchain.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.EXP_PR_TOKEN }}
+          commit-message: "chore: update toolchain ${{ steps.toolchain.outputs.name }}"
+          branch: update-toolchain-${{ steps.toolchain.outputs.name }}
+          base: main
+          delete-branch: true
+          title: "chore: update toolchain ${{ steps.toolchain.outputs.name }}"
