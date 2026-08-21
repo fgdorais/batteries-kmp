@@ -1,28 +1,34 @@
-# Push every commit to `main` into `nightly-testing`
-
-name: Push to Nightly Testing
+name: CD Pipeline
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main", "nightly-testing" ]
+
+concurrency:
+  group: cd-${{ github.head_ref }}
+  cancel-in-progress: false
 
 jobs:
-  push-to-nightly:
+  run-cd:
+    uses: ./.github/workflows/build.yml
+
+  merge-into-nightly-testing:
+    if: github.ref == 'refs/heads/main'
+    needs: run-cd
     runs-on: ubuntu-latest
     steps:
-
-      - name: checkout repo
+      - name: Checkout nightly-testing
         uses: actions/checkout@v7
         with:
           ref: nightly-testing
           fetch-depth: 0
-          token: ${{ secrets.MAINTENANCE_TOKEN }}
+          token: ${{ secrets.BATTERIES_CELL_TOKEN }}
 
-      - name: merge main
+      - name: Merge main into nightly-testing
         run: |
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
           git merge origin/main --no-commit --strategy-option ours --allow-unrelated-histories
-          git restore --staged lean-toolchain lake-manifest.json lakefile.toml
+          git restore --staged lean-toolchain lake-manifest.json
           git commit --allow-empty -m "chore: merge main into nightly-testing"
           git push origin nightly-testing
