@@ -20,12 +20,6 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.BATTERIES_CELL_TOKEN }}
 
-      - name: Merge nightly-testing
-        run: |
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
-          git merge --no-edit origin/nightly-testing
-
       - name: Gather revisions and update toolchain
         id: toolchain
         run: |
@@ -49,6 +43,17 @@ jobs:
           echo "$REQUESTED_TOOLCHAIN" > lean-toolchain
           echo "toolchain_rev=${REQUESTED_TOOLCHAIN#leanprover/lean4:}" >> "$GITHUB_OUTPUT"
           echo "updated=true" >> "$GITHUB_OUTPUT"
+
+      - name: Merge nightly-testing
+        if: steps.toolchain.outputs.updated == 'true'
+        env:
+          REQUESTED_TOOLCHAIN: ${{ steps.toolchain.outputs.requested_toolchain }}
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+          git merge --no-edit origin/nightly-testing
+          git restore --source=origin/main -- lakefile.toml
+          echo "$REQUESTED_TOOLCHAIN" > lean-toolchain
 
       - name: Install Lean
         if: steps.toolchain.outputs.updated == 'true'
