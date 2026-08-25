@@ -7,4 +7,4 @@ name = "BatteriesKMP"
 [[require]]
 name = "batteries"
 git = "https://github.com/leanprover-community/batteries"
-rev = "main"
+rev = "nightly-testing"
