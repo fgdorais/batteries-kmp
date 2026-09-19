@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.BATTERIES_CELL_TOKEN }}
 
-      - name: Gather revisions and update toolchain
+      - name: Gather revisions
         id: toolchain
         run: |
           CURRENT_TOOLCHAIN=$(git show origin/main:lean-toolchain | tr -d '\n')
@@ -40,7 +40,6 @@ jobs:
             exit 0
           fi
 
-          echo "$REQUESTED_TOOLCHAIN" > lean-toolchain
           echo "toolchain_rev=${REQUESTED_TOOLCHAIN#leanprover/lean4:}" >> "$GITHUB_OUTPUT"
           echo "updated=true" >> "$GITHUB_OUTPUT"
 
