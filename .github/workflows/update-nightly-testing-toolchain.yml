@@ -30,7 +30,7 @@ jobs:
           REQUESTED_TOOLCHAIN=$(curl --fail --silent --show-error --location \
             "https://raw.githubusercontent.com/leanprover-community/batteries/${BATTERIES_REV}/lean-toolchain" | tr -d '\n')
           if [[ "$REQUESTED_TOOLCHAIN" != leanprover/lean4:* ]]; then
-            echo "::error::Unexpected UnicodeBasic toolchain: ${REQUESTED_TOOLCHAIN}"
+            echo "::error::Unexpected Batteries toolchain: ${REQUESTED_TOOLCHAIN}"
             exit 1
           fi
 
