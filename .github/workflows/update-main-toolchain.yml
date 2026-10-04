@@ -14,13 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: main
           fetch-depth: 0
           token: ${{ secrets.BATTERIES_CELL_TOKEN }}
 
-      - name: Gather revisions
+      - name: Gather revisions and update toolchain
         id: toolchain
         run: |
           CURRENT_TOOLCHAIN=$(git show origin/main:lean-toolchain | tr -d '\n')
@@ -40,7 +40,7 @@ jobs:
             exit 0
           fi
 
-          echo "requested_toolchain=${REQUESTED_TOOLCHAIN}" >> "$GITHUB_OUTPUT"
+          echo "requested_toolchain=$REQUESTED_TOOLCHAIN" >> "$GITHUB_OUTPUT"
           echo "toolchain_rev=${REQUESTED_TOOLCHAIN#leanprover/lean4:}" >> "$GITHUB_OUTPUT"
           echo "updated=true" >> "$GITHUB_OUTPUT"
 
@@ -57,7 +57,7 @@ jobs:
 
       - name: Install Lean
         if: steps.toolchain.outputs.updated == 'true'
-        uses: leanprover/lean-action@v1
+        uses: leanprover/lean-action@f061402b660e0c34644504b324e830f2991d4865 # v1.6.1
         with:
           auto-config: false
           use-github-cache: false
@@ -68,7 +68,7 @@ jobs:
 
       - name: Create pull request
         if: steps.toolchain.outputs.updated == 'true'
-        uses: peter-evans/create-pull-request@v8
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
         with:
           token: ${{ secrets.BATTERIES_CELL_TOKEN }}
           commit-message: "chore: update toolchain to ${{ steps.toolchain.outputs.toolchain_rev }}"

@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout nightly-testing
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: nightly-testing
           token: ${{ secrets.BATTERIES_CELL_TOKEN }}
@@ -45,7 +45,7 @@ jobs:
 
       - name: Install Lean
         if: steps.toolchain.outputs.updated == 'true'
-        uses: leanprover/lean-action@v1
+        uses: leanprover/lean-action@f061402b660e0c34644504b324e830f2991d4865 # v1.6.1
         with:
           auto-config: false
           use-github-cache: false
