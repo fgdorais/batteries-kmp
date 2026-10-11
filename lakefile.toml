@@ -1,8 +1,11 @@
 name = "batteries-kmp"
-defaultTargets = ["BatteriesKMP"]
+defaultTargets = ["BatteriesKMP", "BatteriesKMPTest"]
 
 [[lean_lib]]
 name = "BatteriesKMP"
+
+[[lean_lib]]
+name = "BatteriesKMPTest"
 
 [[require]]
 name = "batteries"
