@@ -7,7 +7,7 @@ module
 
 public import BatteriesKMP.Array
 
-@[expose] public section
+public section
 
 namespace List
 
