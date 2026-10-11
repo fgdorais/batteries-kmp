@@ -74,7 +74,7 @@ def Matcher.find? [BEq α] (m : Matcher α) (l : List α) : Option (Nat × Nat) 
     | some (l, _) => some (l.snd - m.table.size, l.snd)
 
 /--
-Returns all the start and end positions of all infix sublists of of `l` that match `pattern`.
+Returns all the start and end positions of all infix sublists of `l` that match `pattern`.
 The sublists may be overlapping.
 -/
 @[inline] def findAllInfix [BEq α] (l pattern : List α) : Array (Nat × Nat) :=
