@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2023 F. G. Dorais. All rights reserved.
+Copyright (c) 2023 François G. Dorais. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: F. G. Dorais
+Authors: François G. Dorais
 -/
 module
 
@@ -49,8 +49,15 @@ abbrev Matcher.patternSize (m : Matcher) : Nat := m.pattern.bsize
 
 /-- Find all substrings of `s` matching `m.pattern`. -/
 partial def Matcher.findAll (m : Matcher) (s : Substring.Raw) : Array Substring.Raw :=
-  loop s m.toMatcher #[]
+  if m.pattern.isEmpty then
+    boundaries s #[]
+  else
+    loop s m.toMatcher #[]
 where
+  /-- Empty substrings at every character boundary of `s`, for an empty pattern. -/
+  boundaries (s : Substring.Raw) (occs : Array Substring.Raw) : Array Substring.Raw :=
+    let occs := occs.push { s with stopPos := s.startPos }
+    if s.isEmpty then occs else boundaries (s.drop 1) occs
   /-- Accumulator loop for `String.Matcher.findAll` -/
   loop (s : Substring.Raw) (am : Array.Matcher Char) (occs : Array Substring.Raw) :
       Array Substring.Raw :=
@@ -63,12 +70,15 @@ where
 
 /-- Find the first substring of `s` matching `m.pattern`, or `none` if no such substring exists. -/
 def Matcher.find? (m : Matcher) (s : Substring.Raw) : Option Substring.Raw :=
-  match m.next? s with
-  | none => none
-  | some (s, _) =>
-    some { s with
-      startPos := ⟨s.startPos.byteIdx - m.patternSize⟩
-      stopPos := s.startPos }
+  if m.pattern.isEmpty then
+    some { s with stopPos := s.startPos }
+  else
+    match m.next? s with
+    | none => none
+    | some (s, _) =>
+      some { s with
+        startPos := ⟨s.startPos.byteIdx - m.patternSize⟩
+        stopPos := s.startPos }
 
 end String
 
