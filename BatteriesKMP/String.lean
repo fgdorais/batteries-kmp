@@ -8,7 +8,7 @@ module
 public import BatteriesKMP.Array
 public import Batteries.Data.String.Basic
 
-@[expose] public section
+public section
 
 namespace String
 
