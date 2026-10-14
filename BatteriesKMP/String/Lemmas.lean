@@ -12,7 +12,9 @@ public section
 
 open Std.Stream Array List
 
-namespace String.Slice
+namespace String
+
+namespace Slice
 
 variable {s : Slice}
 
@@ -114,9 +116,9 @@ theorem slice_congr {a a' b b' : s.Pos} {h : a ≤ b} {h' : a' ≤ b'} (ha : a =
     s.slice a b h = s.slice a' b' h' := by
   subst ha hb; rfl
 
-end String.Slice
+end Slice
 
-namespace String.Matcher
+namespace Matcher
 open Slice
 
 @[simp] theorem pattern_ofString (p : Slice) : (ofString p).pattern = p := rfl
@@ -351,9 +353,9 @@ theorem find?_ofString (p s : Slice) :
         (occurrence s (Finite.toList p.startPos).length) := by
   rw [find?_eq_head?_findAll, findAll_ofString, head?_map, head?_filter]
 
-end String.Matcher
+end Matcher
 
-namespace String.Slice
+namespace Slice
 
 theorem findAllSubstr_toList (s p : Slice) :
     (s.findAllSubstr p).toList =
@@ -379,4 +381,6 @@ theorem findSubstr?_eq (s p : Slice) :
   · rintro ⟨j, hj, h⟩; exact ⟨j, by omega, h⟩
   · rintro ⟨j, hj, h⟩; exact ⟨j, by omega, h⟩
 
-end String.Slice
+end Slice
+
+end String
