@@ -6,11 +6,15 @@ KMP locates every occurrence of a pattern in an input in time linear in the leng
 after a preprocessing step linear in the length of the pattern. The preprocessed matcher can be
 reused to search for the same pattern in many inputs.
 
-- `BatteriesKMP.Array` provides the generic machinery: `Array.PrefixTable`, built from a pattern
-  array or stream by `Array.mkPrefixTable` and `Array.mkPrefixTableOfStream`, and
-  `Array.Matcher`, which runs over any finite `Std.Stream` with `Array.Matcher.next?`. The iterator
-  transformer `Array.Matcher.Iterator` turns an iterator into one that yields the iterator state
-  just after each match, and is finite whenever the inner iterator is.
+- `BatteriesKMP.Matcher` provides the generic machinery in the `KMP` namespace:
+  `KMP.PrefixTable`, built from a pattern array or stream by `KMP.mkPrefixTable` and
+  `KMP.mkPrefixTableOfStream`, and `KMP.Matcher`, which runs over any finite `Std.Stream` with
+  `KMP.Matcher.next?`. The iterator transformer `KMP.Matcher.Iterator` turns an iterator into one
+  that yields the iterator state just after each match, and is finite whenever the inner iterator
+  is.
+- `BatteriesKMP.Array` provides `Array.Matcher` with `find?` and `findAll`, which return start
+  and end positions of matching infix subarrays, and the shortcuts `Array.findInfix?`,
+  `Array.findAllInfix` and `Array.containsInfix`.
 - `BatteriesKMP.List` provides `List.Matcher` with `find?` and `findAll`, which return start and
   end positions of matching infix sublists, and the shortcuts `List.findInfix?`,
   `List.findAllInfix` and `List.containsInfix`.
@@ -25,12 +29,13 @@ All occurrences are reported, including overlapping ones.
 ```lean
 import BatteriesKMP
 
-#eval [0, 1, 1, 0, 1, 1, 0].findAllInfix [0, 1, 1, 0]  -- #[(0, 4), (3, 7)]
-#eval [2, 1, 1, 0, 1, 1, 2].containsInfix [0, 1, 1, 0]  -- false
+#eval [0, 1, 1, 0, 1, 1, 0].findAllInfix [0, 1, 1, 0]    -- #[(0, 4), (3, 7)]
+#eval #[0, 1, 1, 0, 1, 1, 0].findAllInfix #[0, 1, 1, 0]  -- #[(0, 4), (3, 7)]
+#eval [2, 1, 1, 0, 1, 1, 2].containsInfix [0, 1, 1, 0]    -- false
 
 def m := String.Matcher.ofString "abba"
-#eval (m.findAll "abbabbabba").size                   -- 3
-#eval (m.find? "aabbaa").isSome                       -- true
+#eval (m.findAll "abbabbabba").size                     -- 3
+#eval (m.find? "aabbaa").isSome                         -- true
 ```
 
 ## Usage

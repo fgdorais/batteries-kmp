@@ -1,3 +1,4 @@
+import BatteriesKMPTest.Array
 import BatteriesKMPTest.Iterator
 import BatteriesKMPTest.List
 import BatteriesKMPTest.String
