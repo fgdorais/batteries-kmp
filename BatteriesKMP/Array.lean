@@ -31,7 +31,7 @@ abbrev PrefixTable.size (t : PrefixTable α) := t.toArray.size
   `t.pattern[:t.step x len]`. If `len` is as large as possible then `t.step x len` will also be
   as large as possible.
 -/
-def PrefixTable.step [BEq α] (t : PrefixTable α) (x : α) : Fin (t.size+1) → Fin (t.size+1)
+@[expose] def PrefixTable.step [BEq α] (t : PrefixTable α) (x : α) : Fin (t.size+1) → Fin (t.size+1)
   | ⟨k, hk⟩ =>
     let cont := fun () =>
       match k with
@@ -52,7 +52,7 @@ termination_by k => k.val
 
   If `t` is the prefix table for `xs` then `t.extend x` is the prefix table for `xs.push x`.
 -/
-def PrefixTable.extend [BEq α] (t : PrefixTable α) (x : α) : PrefixTable α where
+@[expose] def PrefixTable.extend [BEq α] (t : PrefixTable α) (x : α) : PrefixTable α where
   toArray := t.toArray.push (x, t.step x ⟨t.size, Nat.lt_succ_self _⟩)
   valid _ := by
     rw [Array.getElem_push]
@@ -61,7 +61,7 @@ def PrefixTable.extend [BEq α] (t : PrefixTable α) (x : α) : PrefixTable α w
     · next h => exact Nat.le_trans (Nat.lt_succ_iff.1 <| Fin.isLt ..) (Nat.not_lt.1 h)
 
 /-- Make prefix table from a pattern array -/
-def mkPrefixTable [BEq α] (xs : Array α) : PrefixTable α := xs.foldl (·.extend) default
+@[expose] def mkPrefixTable [BEq α] (xs : Array α) : PrefixTable α := xs.foldl (·.extend) default
 
 /-- Make prefix table from a pattern stream -/
 partial def mkPrefixTableOfStream [BEq α] [Std.Stream σ α] (stream : σ) : PrefixTable α :=
