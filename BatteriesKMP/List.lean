@@ -5,7 +5,7 @@ Authors: François G. Dorais
 -/
 module
 
-public import BatteriesKMP.Array
+public import BatteriesKMP.Array.Lemmas
 
 public section
 
@@ -36,7 +36,7 @@ structure Matcher (α : Type _) extends Array.Matcher α where
 
 /-- Make KMP matcher from list pattern. -/
 @[expose, inline] def Matcher.ofList [BEq α] (pattern : List α) : Matcher α where
-  toMatcher := Array.Matcher.ofArray pattern.toArray
+  toMatcher := Array.Matcher.ofStream pattern
   pattern := pattern
 
 /--
@@ -47,17 +47,17 @@ The sublists may be overlapping.
   if m.pattern.isEmpty then
     Array.range (l.length + 1) |>.map fun i => (i, i)
   else
-    loop l 0 m.state #[]
+    loop l m.toMatcher #[]
 where
   /-- Accumulator loop for `List.Matcher.findAll` -/
-  loop : List α → Nat → Fin (m.table.size + 1) → Array (Nat × Nat) → Array (Nat × Nat)
-    | [], _, _, occs => occs
-    | x :: xs, n, k, occs =>
-      let k := m.table.step x k
-      if k.val = m.table.size then
-        loop xs (n + 1) k (occs.push (n + 1 - m.table.size, n + 1))
-      else
-        loop xs (n + 1) k occs
+  loop (rest : List α) (am : Array.Matcher α) (occs : Array (Nat × Nat)) : Array (Nat × Nat) :=
+    match h : am.next? rest with
+    | none => occs
+    | some (rest', am') =>
+      have := Array.Matcher.next?_list_length_lt h
+      let j := l.length - rest'.length
+      loop rest' am' (occs.push (j - m.table.size, j))
+  termination_by rest.length
 
 /--
 Find the start and end positions of the first infix sublist of `l` matching `m.pattern`,
@@ -67,17 +67,11 @@ or `none` if there is no such sublist.
   if m.pattern.isEmpty then
     some (0, 0)
   else
-    loop l 0 m.state
-where
-  /-- Search loop for `List.Matcher.find?` -/
-  loop : List α → Nat → Fin (m.table.size + 1) → Option (Nat × Nat)
-    | [], _, _ => none
-    | x :: xs, n, k =>
-      let k := m.table.step x k
-      if k.val = m.table.size then
-        some (n + 1 - m.table.size, n + 1)
-      else
-        loop xs (n + 1) k
+    match m.next? l with
+    | none => none
+    | some (rest, _) =>
+      let j := l.length - rest.length
+      some (j - m.table.size, j)
 
 /--
 Returns all the start and end positions of all infix sublists of `l` that match `pattern`.

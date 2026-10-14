@@ -5,6 +5,8 @@ Authors: François G. Dorais
 -/
 module
 
+public import BatteriesFiniteStreams.Finite
+
 public section
 
 namespace Array
@@ -63,15 +65,10 @@ termination_by k => k.val
 /-- Make prefix table from a pattern array -/
 @[expose] def mkPrefixTable [BEq α] (xs : Array α) : PrefixTable α := xs.foldl (·.extend) default
 
-/-- Make prefix table from a pattern stream -/
-partial def mkPrefixTableOfStream [BEq α] [Std.Stream σ α] (stream : σ) : PrefixTable α :=
-  loop default stream
-where
-  /-- Inner loop for `mkPrefixTableOfStream` -/
-  loop (t : PrefixTable α) (stream : σ) :=
-    match Stream.next? stream with
-    | none => t
-    | some (x, stream) => loop (t.extend x) stream
+/-- Make prefix table from a finite pattern stream -/
+@[expose] def mkPrefixTableOfStream [BEq α] [Std.Stream.HasNextRelation σ α] (stream : σ)
+    [Std.Stream.Finite stream] : PrefixTable α :=
+  Std.Stream.Finite.foldl stream (·.extend) default
 
 /-- KMP matcher structure -/
 structure Matcher (α) where
@@ -84,25 +81,28 @@ structure Matcher (α) where
 @[expose] def Matcher.ofArray [BEq α] (pat : Array α) : Matcher α where
   table := mkPrefixTable pat
 
-/-- Make a KMP matcher for a given a pattern stream -/
-def Matcher.ofStream [BEq α] [Std.Stream σ α] (pat : σ) : Matcher α where
+/-- Make a KMP matcher for a given finite pattern stream -/
+@[expose] def Matcher.ofStream [BEq α] [Std.Stream.HasNextRelation σ α] (pat : σ)
+    [Std.Stream.Finite pat] : Matcher α where
   table := mkPrefixTableOfStream pat
 
-/-- Find next match from a given stream
+/-- Find next match from a given finite stream
 
   Runs the stream until it reads a sequence that matches the sought pattern, then returns the stream
   state at that point and an updated matcher state.
 -/
-partial def Matcher.next? [BEq α] [Std.Stream σ α] (m : Matcher α) (stream : σ) :
-    Option (σ × Matcher α) :=
-  match Stream.next? stream with
+@[expose] def Matcher.next? [BEq α] [Std.Stream.HasNextRelation σ α] (m : Matcher α) (stream : σ)
+    [Std.Stream.Finite stream] : Option (σ × Matcher α) :=
+  match h : Stream.next? stream with
   | none => none
-  | some (x, stream) =>
+  | some (x, stream') =>
+    have : Std.Stream.Finite stream' := .ofSome h
     let state := m.table.step x m.state
     if state = m.table.size then
-      some (stream, { m with state })
+      some (stream', { m with state })
     else
-      next? { m with state } stream
+      next? { m with state } stream'
+termination_by Std.Stream.Finite.wrap stream
 
 namespace Matcher
 open Std Std.Iterators

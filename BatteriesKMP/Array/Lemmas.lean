@@ -9,6 +9,52 @@ public import BatteriesKMP.Array
 
 public section
 
+namespace Std.Stream
+
+/-- `Reads s xs t` holds when reading the values `xs` from the stream `s` leaves the stream `t`. -/
+inductive Reads [Stream σ α] : σ → List α → σ → Prop
+  /-- Reading nothing leaves the stream unchanged. -/
+  | nil (s : σ) : Reads s [] s
+  /-- Read one value, then the rest. -/
+  | cons : next? s = some (x, s') → Reads s' xs t → Reads s (x :: xs) t
+
+theorem Reads.append [Stream σ α] {s t u : σ} (h₁ : Reads s xs t) (h₂ : Reads t ys u) :
+    Reads s (xs ++ ys) u := by
+  induction h₁ with
+  | nil => exact h₂
+  | cons h _ ih => exact .cons h (ih h₂)
+
+theorem Reads.toList [HasNextRelation σ α] {s t : σ} (h : Reads s xs t) :
+    ∀ [Stream.Finite s] [Stream.Finite t], Finite.toList s = xs ++ Finite.toList t := by
+  induction h with
+  | nil => intros; rfl
+  | @cons s x s' xs t h₁ _ ih =>
+    intros
+    have : Stream.Finite s' := .ofSome h₁
+    rw [Finite.toList_some h₁, ih, List.cons_append]
+
+theorem Reads.list {l t : List α} (h : Reads l xs t) : l = xs ++ t := by
+  induction h with
+  | nil => rfl
+  | @cons l x l' xs t h₁ _ ih =>
+    match l, h₁ with
+    | _ :: _, h₁ =>
+      simp only [Stream.next?, Option.some.injEq, Prod.mk.injEq] at h₁
+      obtain ⟨rfl, rfl⟩ := h₁
+      rw [ih, List.cons_append]
+
+theorem Finite.foldl_eq_foldl_toList [HasNextRelation σ α] (s : σ) [Stream.Finite s]
+    (f : β → α → β) (init : β) : Finite.foldl s f init = (Finite.toList s).foldl f init := by
+  match h : next? s with
+  | none => rw [Finite.foldl_none h, Finite.toList_none h]; rfl
+  | some (x, t) =>
+    have : Stream.Finite t := .ofSome h
+    rw [Finite.foldl_some h, Finite.toList_some h, List.foldl_cons,
+      foldl_eq_foldl_toList t]
+termination_by Finite.wrap s
+
+end Std.Stream
+
 namespace List
 
 variable {p s s' : List α}
@@ -320,3 +366,85 @@ theorem foldl_step_eq_size_iff [BEq α] [LawfulBEq α] {t : PrefixTable α} (ht 
   exact this.eq_iff_suffix t.length_pattern.symm
 
 end Array.PrefixTable
+
+namespace Array
+
+theorem mkPrefixTable_eq_foldl [BEq α] (xs : Array α) :
+    mkPrefixTable xs = xs.toList.foldl (·.extend) default := by
+  rw [mkPrefixTable, ← Array.foldl_toList]
+
+theorem mkPrefixTableOfStream_eq [BEq α] [Std.Stream.HasNextRelation σ α] (s : σ)
+    [Std.Stream.Finite s] : mkPrefixTableOfStream s = mkPrefixTable (Std.Stream.Finite.toList s).toArray := by
+  rw [mkPrefixTableOfStream, Std.Stream.Finite.foldl_eq_foldl_toList, mkPrefixTable_eq_foldl,
+    List.toList_toArray]
+
+namespace Matcher
+open Std.Stream
+
+/-- Run the KMP automaton of `m` from state `k` over the values `xs`. -/
+abbrev run [BEq α] (m : Matcher α) (k : Fin (m.table.size + 1)) (xs : List α) :
+    Fin (m.table.size + 1) :=
+  xs.foldl (fun k x => m.table.step x k) k
+
+theorem next?_eq_some [BEq α] [HasNextRelation σ α] {m : Matcher α} {s : σ} [Std.Stream.Finite s]
+    (h : m.next? s = some (t, m')) :
+    ∃ xs, xs ≠ [] ∧ Reads s xs t ∧ m' = { m with state := m.run m.state xs } ∧
+      (m.run m.state xs).val = m.table.size ∧
+      ∀ i, 0 < i → i < xs.length → (m.run m.state (xs.take i)).val ≠ m.table.size := by
+  rw [Matcher.next?.eq_def] at h
+  split at h
+  · contradiction
+  · next x s' hs =>
+    have : Std.Stream.Finite s' := .ofSome hs
+    dsimp only at h
+    split at h
+    · next hst =>
+      cases h
+      exact ⟨[x], by simp, .cons hs (.nil _), rfl, hst, fun i hi hi' => by simp at hi'; omega⟩
+    · next hst =>
+      obtain ⟨xs, hne, hr, rfl, hsz, hmin⟩ := next?_eq_some h
+      refine ⟨x :: xs, by simp, .cons hs hr, rfl, hsz, fun i hi hi' => ?_⟩
+      match i with
+      | 1 => exact hst
+      | j + 2 =>
+        have := hmin (j + 1) (by omega) (by simp at hi'; omega)
+        simpa [List.take_succ_cons] using this
+termination_by Finite.wrap s
+
+theorem next?_eq_none [BEq α] [HasNextRelation σ α] {m : Matcher α} {s : σ} [Std.Stream.Finite s]
+    (h : m.next? s = none) :
+    ∀ i, 0 < i → i ≤ (Finite.toList s).length →
+      (m.run m.state ((Finite.toList s).take i)).val ≠ m.table.size := by
+  rw [Matcher.next?.eq_def] at h
+  split at h
+  · next hs =>
+    rw [Finite.toList_none hs]
+    intro i hi hi'
+    simp at hi'; omega
+  · next x s' hs =>
+    have : Std.Stream.Finite s' := .ofSome hs
+    dsimp only at h
+    split at h
+    · contradiction
+    · next hst =>
+      have ih := next?_eq_none h
+      rw [Finite.toList_some hs]
+      intro i hi hi'
+      match i with
+      | 1 => simpa using hst
+      | j + 2 =>
+        have := ih (j + 1) (by omega) (by simp at hi'; omega)
+        simpa [List.take_succ_cons] using this
+termination_by Finite.wrap s
+
+end Matcher
+
+end Array
+
+theorem Array.Matcher.next?_list_length_lt [BEq α] {m : Matcher α} {l t : List α}
+    (h : m.next? l = some (t, m')) : t.length < l.length := by
+  obtain ⟨xs, hne, hr, -⟩ := next?_eq_some h
+  rw [hr.list, List.length_append]
+  cases xs with
+  | nil => contradiction
+  | cons => simp
