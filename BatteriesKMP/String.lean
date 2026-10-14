@@ -5,7 +5,7 @@ Authors: François G. Dorais
 -/
 module
 
-public import BatteriesKMP.Array
+public import BatteriesKMP.Matcher
 
 public section
 
@@ -33,10 +33,10 @@ instance (s : Slice) : Std.Stream.WellFounded s.Pos Char :=
       have := Char.utf8Size_pos (p.get hp)
       omega
 
-theorem next?_measure_lt {s : Slice} {m : Array.Matcher Char} {p q : s.Pos}
+theorem next?_measure_lt {s : Slice} {m : KMP.Matcher Char} {p q : s.Pos}
     (h : m.next? p = some (q, m')) :
     s.utf8ByteSize - q.offset.byteIdx < s.utf8ByteSize - p.offset.byteIdx := by
-  replace h := Array.Matcher.next?_transGen h
+  replace h := KMP.Matcher.next?_transGen h
   induction h with
   | single h => exact h
   | tail _ h ih => exact Nat.lt_trans ih h
@@ -62,13 +62,13 @@ def m := Matcher.ofString "abba"
 #eval Array.size <| m.findAll "abbabbabba" -- 3
 ```
 -/
-structure Matcher extends Array.Matcher Char where
+structure Matcher extends KMP.Matcher Char where
   /-- The pattern for the matcher -/
   pattern : Slice
 
 /-- Make KMP matcher from pattern string -/
 @[inline] def Matcher.ofString (pattern : Slice) : Matcher where
-  toMatcher := Array.Matcher.ofStream pattern.startPos
+  toMatcher := KMP.Matcher.ofStream pattern.startPos
   pattern := pattern
 
 /-- The byte size of the string pattern for the matcher -/
@@ -95,7 +95,7 @@ where
   termination_by s.utf8ByteSize - p.offset.byteIdx
   decreasing_by exact Std.Stream.next_of_next?_eq_some _h
   /-- Accumulator loop for `String.Matcher.findAll` -/
-  loop (p : s.Pos) (am : Array.Matcher Char) (occs : Array Slice) : Array Slice :=
+  loop (p : s.Pos) (am : KMP.Matcher Char) (occs : Array Slice) : Array Slice :=
     match h : am.next? p with
     | none => occs
     | some (p', am') =>
@@ -113,7 +113,7 @@ def Matcher.find? (m : Matcher) (s : Slice) : Option Slice :=
     loop s.startPos m.toMatcher
 where
   /-- Search loop for `String.Matcher.find?` -/
-  loop (p : s.Pos) (am : Array.Matcher Char) : Option Slice :=
+  loop (p : s.Pos) (am : KMP.Matcher Char) : Option Slice :=
     match h : am.next? p with
     | none => none
     | some (p', am') =>
