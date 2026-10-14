@@ -395,6 +395,34 @@ abbrev run [BEq α] (m : Matcher α) (k : Fin (m.table.size + 1)) (xs : List α)
     Fin (m.table.size + 1) :=
   xs.foldl (fun k x => m.table.step x k) k
 
+/-- `Matcher.next?` commutes with a map of streams that commutes with `Stream.next?`. -/
+theorem next?_map [BEq α] [HasNextRelation σ α] [HasNextRelation τ α] (f : σ → τ)
+    (hf : ∀ s, Stream.next? (f s) = (Stream.next? s).map fun (x, s') => (x, f s'))
+    (m : Matcher α) (s : σ) [Std.Stream.Finite s] [Std.Stream.Finite (f s)] :
+    m.next? (f s) = (m.next? s).map fun (s', m') => (f s', m') := by
+  rw [Matcher.next?.eq_def, Matcher.next?.eq_def (stream := s)]
+  split
+  · next h =>
+    rw [hf] at h
+    split
+    · rfl
+    · next h' => rw [h'] at h; contradiction
+  · next x t h =>
+    have : Std.Stream.Finite t := .ofSome h
+    rw [hf] at h
+    split
+    · next h' => rw [h'] at h; contradiction
+    · next x' t' h' =>
+      rw [h'] at h
+      simp only [Option.map_some, Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      have : Std.Stream.Finite t' := .ofSome h'
+      dsimp only
+      split
+      · rfl
+      · exact next?_map f hf _ t'
+termination_by Finite.wrap s
+
 theorem next?_eq_some [BEq α] [HasNextRelation σ α] {m : Matcher α} {s : σ} [Std.Stream.Finite s]
     (h : m.next? s = some (t, m')) :
     ∃ xs, xs ≠ [] ∧ Reads s xs t ∧ m' = { m with state := m.run m.state xs } ∧
