@@ -119,20 +119,20 @@ end String.Slice
 namespace String.Matcher
 open Slice
 
-@[simp] theorem pattern_ofSlice (p : Slice) : (ofSlice p).pattern = p := rfl
+@[simp] theorem pattern_ofString (p : Slice) : (ofString p).pattern = p := rfl
 
-@[simp] theorem state_ofSlice (p : Slice) : (ofSlice p).state.val = 0 := rfl
+@[simp] theorem state_ofString (p : Slice) : (ofString p).state.val = 0 := rfl
 
-theorem table_ofSlice (p : Slice) :
-    (ofSlice p).table = mkPrefixTable (Finite.toList p.startPos).toArray :=
+theorem table_ofString (p : Slice) :
+    (ofString p).table = mkPrefixTable (Finite.toList p.startPos).toArray :=
   mkPrefixTableOfStream_eq p.startPos
 
-@[simp] theorem pattern_table_ofSlice (p : Slice) :
-    (ofSlice p).table.pattern = Finite.toList p.startPos := by
-  rw [table_ofSlice, PrefixTable.pattern_mkPrefixTable, List.toList_toArray]
+@[simp] theorem pattern_table_ofString (p : Slice) :
+    (ofString p).table.pattern = Finite.toList p.startPos := by
+  rw [table_ofString, PrefixTable.pattern_mkPrefixTable, List.toList_toArray]
 
-theorem isValid_table_ofSlice (p : Slice) : (ofSlice p).table.IsValid := by
-  rw [table_ofSlice]; exact PrefixTable.isValid_mkPrefixTable _
+theorem isValid_table_ofString (p : Slice) : (ofString p).table.IsValid := by
+  rw [table_ofString]; exact PrefixTable.isValid_mkPrefixTable _
 
 theorem sliceEndingAt?_eq (m : Matcher) {s : Slice} {q t : s.Pos} (hr : Reads q P t)
     (hP : m.patternSize = (P.map Char.utf8Size).sum) :
@@ -253,25 +253,25 @@ the first `j` characters of `s` end with the characters of `p`. That occurrence 
 between the positions after `j - n` and after `j` characters, where `n` is the number of characters
 of `p`.
 -/
-theorem findAll_ofSlice (p s : Slice) :
-    ((ofSlice p).findAll s).toList =
+theorem findAll_ofString (p s : Slice) :
+    ((ofString p).findAll s).toList =
       ((List.range ((Finite.toList s.startPos).length + 1)).filter
         fun j => (Finite.toList p.startPos).isSuffixOf ((Finite.toList s.startPos).take j)).map
         (occurrence s (Finite.toList p.startPos).length) := by
   by_cases hp : p.utf8ByteSize = 0
   · have hp' := (Slice.utf8ByteSize_eq_zero_iff p).1 hp
-    simp only [findAll, patternSize, pattern_ofSlice, hp, ↓reduceIte, hp']
+    simp only [findAll, patternSize, pattern_ofString, hp, ↓reduceIte, hp']
     rw [findAll_boundaries_toList s [] s.startPos (.nil _) #[], List.range_eq_range']
     simp [List.filter_eq_self.2]
-  · have h0 : IsLongestPrefixSuffix (ofSlice p).table.pattern [] (ofSlice p).table.size
-        (ofSlice p).state := by
-      have := isLongestPrefixSuffix_nil (ofSlice p).table.pattern
-      rwa [PrefixTable.length_pattern, ← state_ofSlice p] at this
-    have := findAll_loop_toList (ofSlice p) s (ofSlice p).toMatcher (isValid_table_ofSlice p)
-      (by rw [pattern_table_ofSlice, patternSize, pattern_ofSlice, utf8ByteSize_eq_sum])
+  · have h0 : IsLongestPrefixSuffix (ofString p).table.pattern [] (ofString p).table.size
+        (ofString p).state := by
+      have := isLongestPrefixSuffix_nil (ofString p).table.pattern
+      rwa [PrefixTable.length_pattern, ← state_ofString p] at this
+    have := findAll_loop_toList (ofString p) s (ofString p).toMatcher (isValid_table_ofString p)
+      (by rw [pattern_table_ofString, patternSize, pattern_ofString, utf8ByteSize_eq_sum])
       [] s.startPos (.nil _) h0 #[]
-    simp only [findAll, patternSize, pattern_ofSlice, hp, ↓reduceIte]
-    rw [this, List.range_eq_range', List.range'_succ, pattern_table_ofSlice]
+    simp only [findAll, patternSize, pattern_ofString, hp, ↓reduceIte]
+    rw [this, List.range_eq_range', List.range'_succ, pattern_table_ofString]
     have hp' := mt (Slice.utf8ByteSize_eq_zero_iff p).2 hp
     cases h : Finite.toList p.startPos with
     | nil => contradiction
@@ -344,12 +344,12 @@ theorem find?_eq_head?_findAll (m : Matcher) (s : Slice) :
 `find?` returns the first occurrence of the pattern `p` in `s`: the least `j` such that the first
 `j` characters of `s` end with the characters of `p`.
 -/
-theorem find?_ofSlice (p s : Slice) :
-    (ofSlice p).find? s =
+theorem find?_ofString (p s : Slice) :
+    (ofString p).find? s =
       ((List.range ((Finite.toList s.startPos).length + 1)).find?
         fun j => (Finite.toList p.startPos).isSuffixOf ((Finite.toList s.startPos).take j)).map
         (occurrence s (Finite.toList p.startPos).length) := by
-  rw [find?_eq_head?_findAll, findAll_ofSlice, head?_map, head?_filter]
+  rw [find?_eq_head?_findAll, findAll_ofString, head?_map, head?_filter]
 
 end String.Matcher
 
@@ -360,14 +360,14 @@ theorem findAllSubstr_toList (s p : Slice) :
       ((List.range ((Finite.toList s.startPos).length + 1)).filter
         fun j => (Finite.toList p.startPos).isSuffixOf ((Finite.toList s.startPos).take j)).map
         (occurrence s (Finite.toList p.startPos).length) :=
-  String.Matcher.findAll_ofSlice p s
+  String.Matcher.findAll_ofString p s
 
 theorem findSubstr?_eq (s p : Slice) :
     s.findSubstr? p =
       ((List.range ((Finite.toList s.startPos).length + 1)).find?
         fun j => (Finite.toList p.startPos).isSuffixOf ((Finite.toList s.startPos).take j)).map
         (occurrence s (Finite.toList p.startPos).length) :=
-  String.Matcher.find?_ofSlice p s
+  String.Matcher.find?_ofString p s
 
 /-- `containsSubstr` decides whether the characters of `p` occur contiguously in `s`. -/
 @[simp] theorem containsSubstr_iff {s p : Slice} :
