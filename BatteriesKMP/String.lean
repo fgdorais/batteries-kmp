@@ -9,7 +9,9 @@ public import BatteriesKMP.Array
 
 public section
 
-namespace String.Slice
+namespace String
+
+namespace Slice
 
 /-- Stream of the characters of a slice `s`, starting from a position in `s`. -/
 instance (s : Slice) : Std.Stream s.Pos Char where
@@ -39,9 +41,7 @@ theorem next?_measure_lt {s : Slice} {m : Array.Matcher Char} {p q : s.Pos}
   | single h => exact h
   | tail _ h ih => exact Nat.lt_trans ih h
 
-end String.Slice
-
-namespace String
+end Slice
 
 /-- Knuth-Morris-Pratt matcher type
 
@@ -123,9 +123,7 @@ where
       | none => loop p' am'
   termination_by s.utf8ByteSize - p.offset.byteIdx
 
-end String
-
-namespace String.Slice
+namespace Slice
 
 /--
 Returns all the slices of `s` that match `pattern`.
@@ -146,9 +144,7 @@ Returns true iff `pattern` occurs as a slice of `s`.
 @[inline] def containsSubstr (s pattern : Slice) : Bool :=
   s.findSubstr? pattern |>.isSome
 
-end String.Slice
-
-namespace String
+end Slice
 
 @[inherit_doc Slice.findAllSubstr]
 abbrev findAllSubstr (s : String) (pattern : Slice) : Array Slice :=
