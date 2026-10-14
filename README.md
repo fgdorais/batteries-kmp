@@ -15,9 +15,9 @@ reused to search for the same pattern in many inputs.
   end positions of matching infix sublists, and the shortcuts `List.findInfix?`,
   `List.findAllInfix` and `List.containsInfix`.
 - `BatteriesKMP.String` provides `String.Matcher` with `find?` and `findAll`, which return
-  matching `String.Slice`s, and the shortcuts `String.Slice.findSubstr?`,
-  `String.Slice.findAllSubstr`, `String.Slice.containsSubstr`, `String.findSubstr?` and
-  `String.findAllSubstr`. The characters of a slice `s` are read as a finite stream of
+  matching `String.Slice`s, and the shortcuts `String.Slice.findInfix?`,
+  `String.Slice.findAllInfix`, `String.Slice.containsInfix`, `String.findInfix?` and
+  `String.findAllInfix`. The characters of a slice `s` are read as a finite stream of
   positions `s.Pos`.
 
 All occurrences are reported, including overlapping ones.
