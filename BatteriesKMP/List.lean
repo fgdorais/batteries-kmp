@@ -9,6 +9,13 @@ public import BatteriesKMP.Array
 
 public section
 
+theorem Array.Matcher.next?_list_length_lt [BEq α] {m : Matcher α} {l t : List α}
+    (h : m.next? l = some (t, m')) : t.length < l.length := by
+  replace h := next?_transGen h
+  induction h with
+  | single h => exact h
+  | tail _ h ih => exact Nat.lt_trans ih h
+
 namespace List
 
 /-- Knuth-Morris-Pratt matcher type
@@ -39,27 +46,25 @@ structure Matcher (α : Type _) extends Array.Matcher α where
   toMatcher := Array.Matcher.ofStream pattern
   pattern := pattern
 
-/-- List stream that keeps count of items read. -/
-local instance (α) : Std.Stream (List α × Nat) α where
-  next?
-  | ([], _) => none
-  | (x::xs, n) => (x, xs, n+1)
-
 /--
 Find all start and end positions of all infix sublists of `l` matching `m.pattern`.
 The sublists may be overlapping.
 -/
-partial def Matcher.findAll [BEq α] (m : Matcher α) (l : List α) : Array (Nat × Nat) :=
+def Matcher.findAll [BEq α] (m : Matcher α) (l : List α) : Array (Nat × Nat) :=
   if m.pattern.isEmpty then
     Array.range (l.length + 1) |>.map fun i => (i, i)
   else
-    loop (l, 0) m.toMatcher #[]
+    loop l m.toMatcher #[]
 where
   /-- Accumulator loop for `List.Matcher.findAll` -/
-  loop (l : List α × Nat) (am : Array.Matcher α) (occs : Array (Nat × Nat)) : Array (Nat × Nat) :=
-    match am.next? l with
+  loop (rest : List α) (am : Array.Matcher α) (occs : Array (Nat × Nat)) : Array (Nat × Nat) :=
+    match h : am.next? rest with
     | none => occs
-    | some (l, am) => loop l am (occs.push (l.snd - m.table.size, l.snd))
+    | some (rest', am') =>
+      have := Array.Matcher.next?_list_length_lt h
+      let j := l.length - rest'.length
+      loop rest' am' (occs.push (j - m.table.size, j))
+  termination_by rest.length
 
 /--
 Find the start and end positions of the first infix sublist of `l` matching `m.pattern`,
@@ -69,9 +74,11 @@ def Matcher.find? [BEq α] (m : Matcher α) (l : List α) : Option (Nat × Nat) 
   if m.pattern.isEmpty then
     some (0, 0)
   else
-    match m.next? (l, 0) with
+    match m.next? l with
     | none => none
-    | some (l, _) => some (l.snd - m.table.size, l.snd)
+    | some (rest, _) =>
+      let j := l.length - rest.length
+      some (j - m.table.size, j)
 
 /--
 Returns all the start and end positions of all infix sublists of `l` that match `pattern`.
