@@ -21,6 +21,12 @@ reused to search for the same pattern in many inputs.
 
 All occurrences are reported, including overlapping ones.
 
+The matchers are verified. `BatteriesKMP.Array.Lemmas` proves that the prefix tables and the
+automaton are correct and that `Array.Matcher.next?` stops at the first match.
+`BatteriesKMP.List.Lemmas` and `BatteriesKMP.String.Lemmas` prove that `findAll` returns exactly
+the occurrences of the pattern in order, that `find?` returns the first one, and that
+`List.containsInfix` and `Substring.Raw.containsSubstr` decide whether the pattern occurs.
+
 ```lean
 import BatteriesKMP
 
@@ -42,6 +48,9 @@ name = "batteries-kmp"
 git = "https://github.com/fgdorais/batteries-kmp"
 rev = "main"
 ```
+
+Stream matchers work over finite streams from
+[batteries-finite-streams](https://github.com/fgdorais/batteries-finite-streams).
 
 The `main` branch tracks the Lean toolchain of Batteries `main`. The `nightly-testing` branch
 tracks Batteries `nightly-testing`.

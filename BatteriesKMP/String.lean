@@ -5,7 +5,7 @@ Authors: François G. Dorais
 -/
 module
 
-public import BatteriesKMP.Array
+public import BatteriesKMP.Array.Lemmas
 public import Batteries.Data.String.Basic
 
 public section
@@ -36,19 +36,19 @@ structure Matcher extends Array.Matcher Char where
   pattern : Substring.Raw
 
 /-- Make KMP matcher from pattern substring -/
-@[inline] def Matcher.ofSubstring (pattern : Substring.Raw) : Matcher where
+@[expose, inline] def Matcher.ofSubstring (pattern : Substring.Raw) : Matcher where
   toMatcher := Array.Matcher.ofStream pattern
   pattern := pattern
 
 /-- Make KMP matcher from pattern string -/
-@[inline] def Matcher.ofString (pattern : String) : Matcher :=
+@[expose, inline] def Matcher.ofString (pattern : String) : Matcher :=
   Matcher.ofSubstring pattern
 
 /-- The byte size of the string pattern for the matcher -/
 abbrev Matcher.patternSize (m : Matcher) : Nat := m.pattern.bsize
 
 /-- Find all substrings of `s` matching `m.pattern`. -/
-partial def Matcher.findAll (m : Matcher) (s : Substring.Raw) : Array Substring.Raw :=
+@[expose] def Matcher.findAll (m : Matcher) (s : Substring.Raw) : Array Substring.Raw :=
   if m.pattern.isEmpty then
     boundaries s #[]
   else
@@ -57,19 +57,24 @@ where
   /-- Empty substrings at every character boundary of `s`, for an empty pattern. -/
   boundaries (s : Substring.Raw) (occs : Array Substring.Raw) : Array Substring.Raw :=
     let occs := occs.push { s with stopPos := s.startPos }
-    if s.isEmpty then occs else boundaries (s.drop 1) occs
+    match _h : Std.Stream.next? s with
+    | none => occs
+    | some (_, s) => boundaries s occs
+  termination_by s
   /-- Accumulator loop for `String.Matcher.findAll` -/
   loop (s : Substring.Raw) (am : Array.Matcher Char) (occs : Array Substring.Raw) :
       Array Substring.Raw :=
-    match am.next? s with
+    match h : am.next? s with
     | none => occs
-    | some (s, am) =>
-      loop s am <| occs.push { s with
-        startPos := ⟨s.startPos.byteIdx - m.patternSize⟩
-        stopPos := s.startPos }
+    | some (s', am') =>
+      have := Array.Matcher.next?_substring_bsize_lt h
+      loop s' am' <| occs.push { s' with
+        startPos := ⟨s'.startPos.byteIdx - m.patternSize⟩
+        stopPos := s'.startPos }
+  termination_by s.bsize
 
 /-- Find the first substring of `s` matching `m.pattern`, or `none` if no such substring exists. -/
-def Matcher.find? (m : Matcher) (s : Substring.Raw) : Option Substring.Raw :=
+@[expose] def Matcher.find? (m : Matcher) (s : Substring.Raw) : Option Substring.Raw :=
   if m.pattern.isEmpty then
     some { s with stopPos := s.startPos }
   else
@@ -87,20 +92,20 @@ namespace Substring.Raw
 /--
 Returns all the substrings of `s` that match `pattern`.
 -/
-@[inline] def findAllSubstr (s pattern : Substring.Raw) : Array Substring.Raw :=
+@[expose, inline] def findAllSubstr (s pattern : Substring.Raw) : Array Substring.Raw :=
   (String.Matcher.ofSubstring pattern).findAll s
 
 /--
 Returns the first substring of `s` that matches `pattern`,
 or `none` if there is no such substring.
 -/
-@[inline] def findSubstr? (s pattern : Substring.Raw) : Option Substring.Raw :=
+@[expose, inline] def findSubstr? (s pattern : Substring.Raw) : Option Substring.Raw :=
   (String.Matcher.ofSubstring pattern).find? s
 
 /--
 Returns true iff `pattern` occurs as a substring of `s`.
 -/
-@[inline] def containsSubstr (s pattern : Substring.Raw) : Bool :=
+@[expose, inline] def containsSubstr (s pattern : Substring.Raw) : Bool :=
   s.findSubstr? pattern |>.isSome
 
 end Substring.Raw

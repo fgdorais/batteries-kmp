@@ -6,6 +6,7 @@ Authors: François G. Dorais
 module
 
 public import BatteriesKMP.Array
+public import Batteries.Data.Stream
 
 public section
 
@@ -42,6 +43,14 @@ theorem Reads.list {l t : List α} (h : Reads l xs t) : l = xs ++ t := by
       simp only [Stream.next?, Option.some.injEq, Prod.mk.injEq] at h₁
       obtain ⟨rfl, rfl⟩ := h₁
       rw [ih, List.cons_append]
+
+theorem Reads.drop [Stream σ α] {s t : σ} (h : Reads s xs t) (n : Nat) :
+    Stream.drop s (xs.length + n) = Stream.drop t n := by
+  induction h with
+  | nil => simp
+  | @cons s x s' xs t h₁ _ ih =>
+    rw [List.length_cons, Nat.add_right_comm, Stream.drop, h₁]
+    exact ih
 
 theorem Finite.foldl_eq_foldl_toList [HasNextRelation σ α] (s : σ) [Stream.Finite s]
     (f : β → α → β) (init : β) : Finite.foldl s f init = (Finite.toList s).foldl f init := by
@@ -448,3 +457,18 @@ theorem Array.Matcher.next?_list_length_lt [BEq α] {m : Matcher α} {l t : List
   cases xs with
   | nil => contradiction
   | cons => simp
+
+theorem Std.Stream.Reads.bsize_lt {s t : Substring.Raw} (h : Reads s xs t) (hne : xs ≠ []) :
+    t.bsize < s.bsize := by
+  induction h with
+  | nil => contradiction
+  | @cons s x s' xs t h₁ h₂ ih =>
+    have h₁ : s'.bsize < s.bsize := next_of_next?_eq_some h₁
+    cases xs with
+    | nil => cases h₂; exact h₁
+    | cons => exact Nat.lt_trans (ih (by simp)) h₁
+
+theorem Array.Matcher.next?_substring_bsize_lt {m : Matcher Char}
+    {s t : Substring.Raw} (h : m.next? s = some (t, m')) : t.bsize < s.bsize := by
+  obtain ⟨xs, hne, hr, -⟩ := next?_eq_some h
+  exact hr.bsize_lt hne

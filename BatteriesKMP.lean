@@ -5,3 +5,4 @@ public import BatteriesKMP.Array.Lemmas
 public import BatteriesKMP.List
 public import BatteriesKMP.List.Lemmas
 public import BatteriesKMP.String
+public import BatteriesKMP.String.Lemmas
