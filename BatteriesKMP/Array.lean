@@ -104,6 +104,21 @@ structure Matcher (α) where
       next? { m with state } stream'
 termination_by Std.Stream.Finite.wrap stream
 
+/-- The stream returned by `Matcher.next?` is reached from the input stream by `Stream.Next`. -/
+theorem Matcher.next?_transGen [BEq α] [Std.Stream.HasNextRelation σ α] {m : Matcher α}
+    {stream : σ} [Std.Stream.Finite stream] (h : m.next? stream = some (stream', m')) :
+    Relation.TransGen Std.Stream.Next stream' stream := by
+  rw [Matcher.next?.eq_def] at h
+  split at h
+  · contradiction
+  · next hs =>
+    have : Std.Stream.Finite _ := .ofSome hs
+    dsimp only at h
+    split at h
+    · cases h; exact .single (Std.Stream.next_of_next?_eq_some hs)
+    · exact .tail (next?_transGen h) (Std.Stream.next_of_next?_eq_some hs)
+termination_by Std.Stream.Finite.wrap stream
+
 namespace Matcher
 open Std Std.Iterators
 

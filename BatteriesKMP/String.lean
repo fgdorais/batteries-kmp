@@ -5,7 +5,7 @@ Authors: François G. Dorais
 -/
 module
 
-public import BatteriesKMP.Array.Lemmas
+public import BatteriesKMP.Array
 
 public section
 
@@ -31,22 +31,13 @@ instance (s : Slice) : Std.Stream.WellFounded s.Pos Char :=
       have := Char.utf8Size_pos (p.get hp)
       omega
 
-theorem Pos.measure_lt_of_reads {s : Slice} {p q : s.Pos} (h : Std.Stream.Reads p xs q)
-    (hne : xs ≠ []) : s.utf8ByteSize - q.offset.byteIdx < s.utf8ByteSize - p.offset.byteIdx := by
-  induction h with
-  | nil => contradiction
-  | @cons p x p' xs q h₁ h₂ ih =>
-    have h₁ : s.utf8ByteSize - p'.offset.byteIdx < s.utf8ByteSize - p.offset.byteIdx :=
-      Std.Stream.next_of_next?_eq_some h₁
-    cases xs with
-    | nil => cases h₂; exact h₁
-    | cons => exact Nat.lt_trans (ih (by simp)) h₁
-
 theorem next?_measure_lt {s : Slice} {m : Array.Matcher Char} {p q : s.Pos}
     (h : m.next? p = some (q, m')) :
     s.utf8ByteSize - q.offset.byteIdx < s.utf8ByteSize - p.offset.byteIdx := by
-  obtain ⟨xs, hne, hr, -⟩ := Array.Matcher.next?_eq_some h
-  exact Pos.measure_lt_of_reads hr hne
+  replace h := Array.Matcher.next?_transGen h
+  induction h with
+  | single h => exact h
+  | tail _ h ih => exact Nat.lt_trans ih h
 
 end String.Slice
 

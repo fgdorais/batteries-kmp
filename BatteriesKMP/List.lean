@@ -5,9 +5,16 @@ Authors: François G. Dorais
 -/
 module
 
-public import BatteriesKMP.Array.Lemmas
+public import BatteriesKMP.Array
 
 public section
+
+theorem Array.Matcher.next?_list_length_lt [BEq α] {m : Matcher α} {l t : List α}
+    (h : m.next? l = some (t, m')) : t.length < l.length := by
+  replace h := next?_transGen h
+  induction h with
+  | single h => exact h
+  | tail _ h ih => exact Nat.lt_trans ih h
 
 namespace List
 

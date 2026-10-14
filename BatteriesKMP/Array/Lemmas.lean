@@ -449,11 +449,3 @@ termination_by Finite.wrap s
 end Matcher
 
 end Array
-
-theorem Array.Matcher.next?_list_length_lt [BEq α] {m : Matcher α} {l t : List α}
-    (h : m.next? l = some (t, m')) : t.length < l.length := by
-  obtain ⟨xs, hne, hr, -⟩ := next?_eq_some h
-  rw [hr.list, List.length_append]
-  cases xs with
-  | nil => contradiction
-  | cons => simp

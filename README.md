@@ -8,7 +8,7 @@ reused to search for the same pattern in many inputs.
 
 - `BatteriesKMP.Array` provides the generic machinery: `Array.PrefixTable`, built from a pattern
   array or stream by `Array.mkPrefixTable` and `Array.mkPrefixTableOfStream`, and
-  `Array.Matcher`, which runs over any `Std.Stream` with `Array.Matcher.next?`. The iterator
+  `Array.Matcher`, which runs over any finite `Std.Stream` with `Array.Matcher.next?`. The iterator
   transformer `Array.Matcher.Iterator` turns an iterator into one that yields the iterator state
   just after each match, and is finite whenever the inner iterator is.
 - `BatteriesKMP.List` provides `List.Matcher` with `find?` and `findAll`, which return start and
