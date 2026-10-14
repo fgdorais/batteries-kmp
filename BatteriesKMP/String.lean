@@ -66,14 +66,10 @@ structure Matcher extends Array.Matcher Char where
   /-- The pattern for the matcher -/
   pattern : Slice
 
-/-- Make KMP matcher from pattern slice -/
-@[inline] def Matcher.ofSlice (pattern : Slice) : Matcher where
+/-- Make KMP matcher from pattern string -/
+@[inline] def Matcher.ofString (pattern : Slice) : Matcher where
   toMatcher := Array.Matcher.ofStream pattern.startPos
   pattern := pattern
-
-/-- Make KMP matcher from pattern string -/
-@[inline] def Matcher.ofString (pattern : String) : Matcher :=
-  Matcher.ofSlice pattern
 
 /-- The byte size of the string pattern for the matcher -/
 abbrev Matcher.patternSize (m : Matcher) : Nat := m.pattern.utf8ByteSize
@@ -135,14 +131,14 @@ namespace String.Slice
 Returns all the slices of `s` that match `pattern`.
 -/
 @[inline] def findAllSubstr (s pattern : Slice) : Array Slice :=
-  (String.Matcher.ofSlice pattern).findAll s
+  (String.Matcher.ofString pattern).findAll s
 
 /--
 Returns the first slice of `s` that matches `pattern`,
 or `none` if there is no such slice.
 -/
 @[inline] def findSubstr? (s pattern : Slice) : Option Slice :=
-  (String.Matcher.ofSlice pattern).find? s
+  (String.Matcher.ofString pattern).find? s
 
 /--
 Returns true iff `pattern` occurs as a slice of `s`.
