@@ -128,30 +128,30 @@ namespace Slice
 /--
 Returns all the slices of `s` that match `pattern`.
 -/
-@[expose, inline] def findAllSubstr (s pattern : Slice) : Array Slice :=
+@[expose, inline] def findAllInfix (s pattern : Slice) : Array Slice :=
   (String.Matcher.ofString pattern).findAll s
 
 /--
 Returns the first slice of `s` that matches `pattern`,
 or `none` if there is no such slice.
 -/
-@[expose, inline] def findSubstr? (s pattern : Slice) : Option Slice :=
+@[expose, inline] def findInfix? (s pattern : Slice) : Option Slice :=
   (String.Matcher.ofString pattern).find? s
 
 /--
 Returns true iff `pattern` occurs as a slice of `s`.
 -/
-@[expose, inline] def containsSubstr (s pattern : Slice) : Bool :=
-  s.findSubstr? pattern |>.isSome
+@[expose, inline] def containsInfix (s pattern : Slice) : Bool :=
+  s.findInfix? pattern |>.isSome
 
 end Slice
 
-@[inherit_doc Slice.findAllSubstr]
-abbrev findAllSubstr (s : String) (pattern : Slice) : Array Slice :=
-  s.toSlice.findAllSubstr pattern
+@[inherit_doc Slice.findAllInfix]
+abbrev findAllInfix (s : String) (pattern : Slice) : Array Slice :=
+  s.toSlice.findAllInfix pattern
 
-@[inherit_doc Slice.findSubstr?]
-abbrev findSubstr? (s : String) (pattern : Slice) : Option Slice :=
-  s.toSlice.findSubstr? pattern
+@[inherit_doc Slice.findInfix?]
+abbrev findInfix? (s : String) (pattern : Slice) : Option Slice :=
+  s.toSlice.findInfix? pattern
 
 end String

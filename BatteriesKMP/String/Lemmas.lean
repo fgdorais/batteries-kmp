@@ -357,24 +357,24 @@ end Matcher
 
 namespace Slice
 
-theorem findAllSubstr_toList (s p : Slice) :
-    (s.findAllSubstr p).toList =
+theorem findAllInfix_toList (s p : Slice) :
+    (s.findAllInfix p).toList =
       ((List.range ((Finite.toList s.startPos).length + 1)).filter
         fun j => (Finite.toList p.startPos).isSuffixOf ((Finite.toList s.startPos).take j)).map
         (occurrence s (Finite.toList p.startPos).length) :=
   String.Matcher.findAll_ofString p s
 
-theorem findSubstr?_eq (s p : Slice) :
-    s.findSubstr? p =
+theorem findInfix?_eq (s p : Slice) :
+    s.findInfix? p =
       ((List.range ((Finite.toList s.startPos).length + 1)).find?
         fun j => (Finite.toList p.startPos).isSuffixOf ((Finite.toList s.startPos).take j)).map
         (occurrence s (Finite.toList p.startPos).length) :=
   String.Matcher.find?_ofString p s
 
-/-- `containsSubstr` decides whether the characters of `p` occur contiguously in `s`. -/
-@[simp] theorem containsSubstr_iff {s p : Slice} :
-    s.containsSubstr p ↔ Finite.toList p.startPos <:+: Finite.toList s.startPos := by
-  rw [containsSubstr, findSubstr?_eq]
+/-- `containsInfix` decides whether the characters of `p` occur contiguously in `s`. -/
+@[simp] theorem containsInfix_iff {s p : Slice} :
+    s.containsInfix p ↔ Finite.toList p.startPos <:+: Finite.toList s.startPos := by
+  rw [containsInfix, findInfix?_eq]
   simp only [Option.isSome_map, List.find?_isSome, List.mem_range,
     isSuffixOf_iff_suffix, List.infix_iff_exists_suffix_take]
   constructor
