@@ -1,4 +1,4 @@
-import BatteriesKMP.Array
+import BatteriesKMP.Matcher
 import Std.Data.Iterators
 
 /-! # Tests for the Knuth-Morris-Pratt (KMP) iterator transformer -/

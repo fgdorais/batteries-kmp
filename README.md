@@ -6,11 +6,12 @@ KMP locates every occurrence of a pattern in an input in time linear in the leng
 after a preprocessing step linear in the length of the pattern. The preprocessed matcher can be
 reused to search for the same pattern in many inputs.
 
-- `BatteriesKMP.Array` provides the generic machinery: `Array.PrefixTable`, built from a pattern
-  array or stream by `Array.mkPrefixTable` and `Array.mkPrefixTableOfStream`, and
-  `Array.Matcher`, which runs over any finite `Std.Stream` with `Array.Matcher.next?`. The iterator
-  transformer `Array.Matcher.Iterator` turns an iterator into one that yields the iterator state
-  just after each match, and is finite whenever the inner iterator is.
+- `BatteriesKMP.Array` provides `Array.PrefixTable`, built from a pattern array or stream by
+  `Array.mkPrefixTable` and `Array.mkPrefixTableOfStream`.
+- `BatteriesKMP.Matcher` provides the generic matcher `Array.Matcher`, which runs over any finite
+  `Std.Stream` with `Array.Matcher.next?`. The iterator transformer `Array.Matcher.Iterator` turns
+  an iterator into one that yields the iterator state just after each match, and is finite
+  whenever the inner iterator is.
 - `BatteriesKMP.List` provides `List.Matcher` with `find?` and `findAll`, which return start and
   end positions of matching infix sublists, and the shortcuts `List.findInfix?`,
   `List.findAllInfix` and `List.containsInfix`.
