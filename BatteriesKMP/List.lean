@@ -5,11 +5,11 @@ Authors: François G. Dorais
 -/
 module
 
-public import BatteriesKMP.Array
+public import BatteriesKMP.Matcher
 
 public section
 
-theorem Array.Matcher.next?_list_length_lt [BEq α] {m : Matcher α} {l t : List α}
+theorem KMP.Matcher.next?_list_length_lt [BEq α] {m : Matcher α} {l t : List α}
     (h : m.next? l = some (t, m')) : t.length < l.length := by
   replace h := next?_transGen h
   induction h with
@@ -37,13 +37,13 @@ def m := Matcher.ofList [0,1,1,0]
 #eval Array.size <| m.findAll [0,1,1,0,1,1,0,1,1,0] -- 3
 ```
 -/
-structure Matcher (α : Type _) extends Array.Matcher α where
+structure Matcher (α : Type _) extends KMP.Matcher α where
   /-- The pattern for the matcher -/
   pattern : List α
 
 /-- Make KMP matcher from list pattern. -/
 @[expose, inline] def Matcher.ofList [BEq α] (pattern : List α) : Matcher α where
-  toMatcher := Array.Matcher.ofStream pattern
+  toMatcher := KMP.Matcher.ofStream pattern
   pattern := pattern
 
 /--
@@ -57,11 +57,11 @@ The sublists may be overlapping.
     loop l m.toMatcher #[]
 where
   /-- Accumulator loop for `List.Matcher.findAll` -/
-  loop (rest : List α) (am : Array.Matcher α) (occs : Array (Nat × Nat)) : Array (Nat × Nat) :=
+  loop (rest : List α) (am : KMP.Matcher α) (occs : Array (Nat × Nat)) : Array (Nat × Nat) :=
     match h : am.next? rest with
     | none => occs
     | some (rest', am') =>
-      have := Array.Matcher.next?_list_length_lt h
+      have := KMP.Matcher.next?_list_length_lt h
       let j := l.length - rest'.length
       loop rest' am' (occs.push (j - m.table.size, j))
   termination_by rest.length

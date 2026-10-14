@@ -5,7 +5,7 @@ Authors: François G. Dorais
 -/
 module
 
-public import BatteriesKMP.Array.Lemmas
+public import BatteriesKMP.Matcher.Lemmas
 public import BatteriesKMP.List
 
 public section
@@ -24,11 +24,11 @@ theorem infix_iff_exists_suffix_take {p l : List α} :
     rw [hs, List.take_append_drop]
 
 namespace Matcher
-open Array Std.Stream
+open KMP Std.Stream
 
 @[simp] theorem table_ofList [BEq α] (p : List α) :
     (ofList p).table = mkPrefixTable p.toArray := by
-  simp [ofList, Array.Matcher.ofStream, mkPrefixTableOfStream_eq]
+  simp [ofList, KMP.Matcher.ofStream, mkPrefixTableOfStream_eq]
 
 @[simp] theorem pattern_ofList [BEq α] (p : List α) : (ofList p).pattern = p := rfl
 
@@ -46,14 +46,14 @@ theorem size_table_ofList [BEq α] [LawfulBEq α] (p : List α) :
   rw [← PrefixTable.length_pattern, pattern_table_ofList]
 
 /-- The automaton accepts after reading `ys` exactly when the pattern is a suffix. -/
-theorem run_eq_size_iff [BEq α] [LawfulBEq α] {am : Array.Matcher α} (ht : am.table.IsValid)
+theorem run_eq_size_iff [BEq α] [LawfulBEq α] {am : KMP.Matcher α} (ht : am.table.IsValid)
     (hk : IsLongestPrefixSuffix am.table.pattern pre am.table.size am.state) (ys : List α) :
     (am.run am.state ys).val = am.table.size ↔ am.table.pattern <:+ pre ++ ys :=
   (PrefixTable.foldl_step_isLongestPrefixSuffix ht hk ys).eq_iff_suffix
     am.table.length_pattern.symm
 
 theorem findAll_loop_toList [BEq α] [LawfulBEq α] (m : Matcher α) (l : List α)
-    (am : Array.Matcher α) (ht : am.table.IsValid) (hsz : am.table.size = m.table.size)
+    (am : KMP.Matcher α) (ht : am.table.IsValid) (hsz : am.table.size = m.table.size)
     (pre rest : List α) (hl : l = pre ++ rest)
     (hk : IsLongestPrefixSuffix am.table.pattern pre am.table.size am.state)
     (occs : Array (Nat × Nat)) :
@@ -71,7 +71,7 @@ theorem findAll_loop_toList [BEq α] [LawfulBEq α] (m : Matcher α) (l : List �
   rw [findAll.loop]
   split
   · next h =>
-    have hn := Array.Matcher.next?_eq_none h
+    have hn := KMP.Matcher.next?_eq_none h
     rw [Finite.toList_list] at hn
     suffices hnil : (List.range' (pre.length + 1) rest.length).filter
         (fun j => am.table.pattern.isSuffixOf (l.take j)) = [] by
@@ -83,7 +83,7 @@ theorem findAll_loop_toList [BEq α] [LawfulBEq α] (m : Matcher α) (l : List �
     rw [hiff i (by omega)]
     exact hn i (by omega) (by omega)
   · next rest' am' h =>
-    obtain ⟨xs, hne, hr, rfl, hacc, hmin⟩ := Array.Matcher.next?_eq_some h
+    obtain ⟨xs, hne, hr, rfl, hacc, hmin⟩ := KMP.Matcher.next?_eq_some h
     have hrest := hr.list
     have hk' := PrefixTable.foldl_step_isLongestPrefixSuffix ht hk xs
     have ih := findAll_loop_toList m l { am with state := am.run am.state xs } ht hsz
@@ -115,9 +115,9 @@ theorem findAll_loop_toList [BEq α] [LawfulBEq α] (m : Matcher α) (l : List �
     rw [e1, e2, List.range'_one, List.filter_cons]
     simp [hlast]
 termination_by rest.length
-decreasing_by exact Array.Matcher.next?_list_length_lt h
+decreasing_by exact KMP.Matcher.next?_list_length_lt h
 
-theorem findAll_loop_toList_eq [BEq α] (m : Matcher α) (l rest : List α) (am : Array.Matcher α)
+theorem findAll_loop_toList_eq [BEq α] (m : Matcher α) (l rest : List α) (am : KMP.Matcher α)
     (occs : Array (Nat × Nat)) :
     (findAll.loop m l rest am occs).toList =
       occs.toList ++ (findAll.loop m l rest am #[]).toList := by
@@ -129,7 +129,7 @@ theorem findAll_loop_toList_eq [BEq α] (m : Matcher α) (l rest : List α) (am 
       findAll_loop_toList_eq m l rest' am' (#[].push _)]
     simp
 termination_by rest.length
-decreasing_by all_goals (apply Array.Matcher.next?_list_length_lt; assumption)
+decreasing_by all_goals (apply KMP.Matcher.next?_list_length_lt; assumption)
 
 theorem find?_eq_head?_findAll [BEq α] (m : Matcher α) (l : List α) :
     m.find? l = (m.findAll l).toList.head? := by

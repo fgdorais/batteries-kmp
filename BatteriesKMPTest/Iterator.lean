@@ -6,7 +6,7 @@ import Std.Data.Iterators
 open Std Std.Iterators
 
 def matchSuffixes (pattern input : List Nat) : List (List Nat) := Id.run do
-  let m := Array.Matcher.ofArray pattern.toArray
+  let m := (Array.Matcher.ofArray pattern.toArray).toMatcher
   let it : IterM (α := m.Iterator _ Id Nat) Id _ :=
     ⟨{ inner := input.iter.toIterM }⟩
   return it.toList.map (·.list)

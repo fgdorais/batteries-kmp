@@ -5,7 +5,7 @@ Authors: François G. Dorais
 -/
 module
 
-public import BatteriesKMP.Array
+public import BatteriesKMP.Matcher
 public import Batteries.Data.Stream
 
 public section
@@ -204,7 +204,7 @@ theorem le_of_take_suffix_take_concat {p : List α} (hk : k ≤ p.length)
 
 end List
 
-namespace Array.PrefixTable
+namespace KMP.PrefixTable
 
 /-- The pattern of a prefix table. -/
 def pattern (t : PrefixTable α) : List α := t.toArray.toList.map (·.1)
@@ -374,9 +374,9 @@ theorem foldl_step_eq_size_iff [BEq α] [LawfulBEq α] {t : PrefixTable α} (ht 
   rw [List.nil_append] at this
   exact this.eq_iff_suffix t.length_pattern.symm
 
-end Array.PrefixTable
+end KMP.PrefixTable
 
-namespace Array
+namespace KMP
 
 theorem mkPrefixTable_eq_foldl [BEq α] (xs : Array α) :
     mkPrefixTable xs = xs.toList.foldl (·.extend) default := by
@@ -448,4 +448,4 @@ termination_by Finite.wrap s
 
 end Matcher
 
-end Array
+end KMP

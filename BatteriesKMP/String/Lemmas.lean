@@ -10,7 +10,7 @@ public import BatteriesKMP.List.Lemmas
 
 public section
 
-open Std.Stream Array List
+open Std.Stream KMP List
 
 namespace String
 
@@ -150,7 +150,7 @@ theorem sliceEndingAt?_eq (m : Matcher) {s : Slice} {q t : s.Pos} (hr : Reads q 
   s.slice (Std.Stream.drop s.startPos (j - n)) (Std.Stream.drop s.startPos j)
     (drop_le_drop _ (Nat.sub_le j n))
 
-theorem findAll_loop_toList (m : Matcher) (s : Slice) (am : Array.Matcher Char)
+theorem findAll_loop_toList (m : Matcher) (s : Slice) (am : KMP.Matcher Char)
     (ht : am.table.IsValid)
     (hsz : m.patternSize = (am.table.pattern.map Char.utf8Size).sum)
     (pre : List Char) (t : s.Pos) (hr₀ : Reads s.startPos pre t)
@@ -172,7 +172,7 @@ theorem findAll_loop_toList (m : Matcher) (s : Slice) (am : Array.Matcher Char)
   rw [findAll.loop]
   split
   · next h =>
-    have hn := Array.Matcher.next?_eq_none h
+    have hn := KMP.Matcher.next?_eq_none h
     suffices hnil : (List.range' (pre.length + 1) (Finite.toList t).length).filter
         (fun j => am.table.pattern.isSuffixOf ((Finite.toList s.startPos).take j)) = [] by
       simp [hnil]
@@ -183,7 +183,7 @@ theorem findAll_loop_toList (m : Matcher) (s : Slice) (am : Array.Matcher Char)
     rw [hiff i (by omega)]
     exact hn i (by omega) (by omega)
   · next t' am' h =>
-    obtain ⟨xs, hne, hr, rfl, hacc, hmin⟩ := Array.Matcher.next?_eq_some h
+    obtain ⟨xs, hne, hr, rfl, hacc, hmin⟩ := KMP.Matcher.next?_eq_some h
     have hrest := hr.toList (s := t) (t := t')
     have hk' := PrefixTable.foldl_step_isLongestPrefixSuffix ht hk xs
     have hr₁ : Reads s.startPos (pre ++ xs) t' := hr₀.append hr
@@ -279,7 +279,7 @@ theorem findAll_ofString (p s : Slice) :
     | nil => contradiction
     | cons => simp
 
-theorem findAll_loop_toList_eq (m : Matcher) (s : Slice) (t : s.Pos) (am : Array.Matcher Char)
+theorem findAll_loop_toList_eq (m : Matcher) (s : Slice) (t : s.Pos) (am : KMP.Matcher Char)
     (occs : Array Slice) :
     (findAll.loop m s t am occs).toList = occs.toList ++ (findAll.loop m s t am #[]).toList := by
   rw [findAll.loop, findAll.loop]
@@ -294,11 +294,11 @@ theorem findAll_loop_toList_eq (m : Matcher) (s : Slice) (t : s.Pos) (am : Array
 termination_by s.utf8ByteSize - t.offset.byteIdx
 decreasing_by all_goals exact Slice.next?_measure_lt ‹_›
 
-theorem find?_loop_of_none {m : Matcher} {s : Slice} {t : s.Pos} {am : Array.Matcher Char}
+theorem find?_loop_of_none {m : Matcher} {s : Slice} {t : s.Pos} {am : KMP.Matcher Char}
     (h : am.next? t = none) : find?.loop m s t am = none := by
   rw [find?.loop]; split <;> simp_all
 
-theorem find?_loop_of_some {m : Matcher} {s : Slice} {t t' : s.Pos} {am am' : Array.Matcher Char}
+theorem find?_loop_of_some {m : Matcher} {s : Slice} {t t' : s.Pos} {am am' : KMP.Matcher Char}
     (h : am.next? t = some (t', am')) : find?.loop m s t am =
       match m.sliceEndingAt? s t' with
       | some r => some r
@@ -307,12 +307,12 @@ theorem find?_loop_of_some {m : Matcher} {s : Slice} {t t' : s.Pos} {am am' : Ar
   · simp_all
   · next h' => rw [h] at h'; cases h'; rfl
 
-theorem findAll_loop_of_none {m : Matcher} {s : Slice} {t : s.Pos} {am : Array.Matcher Char}
+theorem findAll_loop_of_none {m : Matcher} {s : Slice} {t : s.Pos} {am : KMP.Matcher Char}
     (h : am.next? t = none) : findAll.loop m s t am occs = occs := by
   rw [findAll.loop]; split <;> simp_all
 
 theorem findAll_loop_of_some {m : Matcher} {s : Slice} {t t' : s.Pos}
-    {am am' : Array.Matcher Char} (h : am.next? t = some (t', am')) :
+    {am am' : KMP.Matcher Char} (h : am.next? t = some (t', am')) :
     findAll.loop m s t am occs = findAll.loop m s t' am'
       (match m.sliceEndingAt? s t' with
         | some r => occs.push r
@@ -321,7 +321,7 @@ theorem findAll_loop_of_some {m : Matcher} {s : Slice} {t t' : s.Pos}
   · simp_all
   · next h' => rw [h] at h'; cases h'; rfl
 
-theorem find?_loop_eq (m : Matcher) (s : Slice) (t : s.Pos) (am : Array.Matcher Char) :
+theorem find?_loop_eq (m : Matcher) (s : Slice) (t : s.Pos) (am : KMP.Matcher Char) :
     find?.loop m s t am = (findAll.loop m s t am #[]).toList.head? := by
   match hn : am.next? t with
   | none => rw [find?_loop_of_none hn, findAll_loop_of_none hn]; rfl
