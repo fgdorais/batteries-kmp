@@ -10,6 +10,13 @@ public import Batteries.Data.String.Basic
 
 public section
 
+theorem Array.Matcher.next?_substring_bsize_lt {m : Matcher Char} {s t : Substring.Raw}
+    (h : m.next? s = some (t, m')) : t.bsize < s.bsize := by
+  replace h := next?_transGen h
+  induction h with
+  | single h => exact h
+  | tail _ h ih => exact Nat.lt_trans ih h
+
 namespace String
 
 /-- Knuth-Morris-Pratt matcher type
@@ -48,7 +55,7 @@ structure Matcher extends Array.Matcher Char where
 abbrev Matcher.patternSize (m : Matcher) : Nat := m.pattern.bsize
 
 /-- Find all substrings of `s` matching `m.pattern`. -/
-partial def Matcher.findAll (m : Matcher) (s : Substring.Raw) : Array Substring.Raw :=
+def Matcher.findAll (m : Matcher) (s : Substring.Raw) : Array Substring.Raw :=
   if m.pattern.isEmpty then
     boundaries s #[]
   else
@@ -57,16 +64,21 @@ where
   /-- Empty substrings at every character boundary of `s`, for an empty pattern. -/
   boundaries (s : Substring.Raw) (occs : Array Substring.Raw) : Array Substring.Raw :=
     let occs := occs.push { s with stopPos := s.startPos }
-    if s.isEmpty then occs else boundaries (s.drop 1) occs
+    match _h : Std.Stream.next? s with
+    | none => occs
+    | some (_, s) => boundaries s occs
+  termination_by s
   /-- Accumulator loop for `String.Matcher.findAll` -/
   loop (s : Substring.Raw) (am : Array.Matcher Char) (occs : Array Substring.Raw) :
       Array Substring.Raw :=
-    match am.next? s with
+    match h : am.next? s with
     | none => occs
-    | some (s, am) =>
-      loop s am <| occs.push { s with
-        startPos := ⟨s.startPos.byteIdx - m.patternSize⟩
-        stopPos := s.startPos }
+    | some (s', am') =>
+      have := Array.Matcher.next?_substring_bsize_lt h
+      loop s' am' <| occs.push { s' with
+        startPos := ⟨s'.startPos.byteIdx - m.patternSize⟩
+        stopPos := s'.startPos }
+  termination_by s.bsize
 
 /-- Find the first substring of `s` matching `m.pattern`, or `none` if no such substring exists. -/
 def Matcher.find? (m : Matcher) (s : Substring.Raw) : Option Substring.Raw :=
