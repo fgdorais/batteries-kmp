@@ -13,25 +13,31 @@ def m := String.Matcher.ofString "abba"
 
 #guard Array.size (m.findAll "abbabbabba") = 3
 
-#guard Option.isSome ("xyyxx".findSubstr? "xy")
+#guard Option.isSome ("xyyxx".findInfix? "xy")
 
-#guard ! Option.isSome ("xyyxx".findSubstr? "xyx")
+#guard ! Option.isSome ("xyyxx".findInfix? "xyx")
 
-#guard Array.size ("xyyxx".findAllSubstr "xyx") = 0
+#guard Array.size ("xyyxx".findAllInfix "xyx") = 0
 
-#guard Array.size ("xyyxxyx".findAllSubstr "xyx") = 1
+#guard Array.size ("xyyxxyx".findAllInfix "xyx") = 1
 
-#guard Array.size ("xyxyyxxyx".findAllSubstr "xyx") = 2
+#guard Array.size ("xyxyyxxyx".findAllInfix "xyx") = 2
 
-#guard Array.size ("xyxyxyyxxyxyx".findAllSubstr "xyx") = 4
+#guard Array.size ("xyxyxyyxxyxyx".findAllInfix "xyx") = 4
 
 /-! ### Empty patterns match at every character boundary -/
 
-#guard ("".findSubstr? "").map (·.startPos.byteIdx) == some 0
-#guard ("abc".findSubstr? "").map (·.startPos.byteIdx) == some 0
-#guard ("".findAllSubstr "").map (·.startPos.byteIdx) == #[0]
-#guard ("abc".findAllSubstr "").map (·.startPos.byteIdx) == #[0, 1, 2, 3]
-#guard ("aé".findAllSubstr "").map (·.startPos.byteIdx) == #[0, 1, 3]
-#guard ("abc".findAllSubstr "").all (·.isEmpty)
-#guard ("".toRawSubstring.containsSubstr "")
-#guard ("".findSubstr? "a").isNone
+#guard ("".findInfix? "").map (·.startInclusive.offset.byteIdx) == some 0
+#guard ("abc".findInfix? "").map (·.startInclusive.offset.byteIdx) == some 0
+#guard ("".findAllInfix "").map (·.startInclusive.offset.byteIdx) == #[0]
+#guard ("abc".findAllInfix "").map (·.startInclusive.offset.byteIdx) == #[0, 1, 2, 3]
+#guard ("aé".findAllInfix "").map (·.startInclusive.offset.byteIdx) == #[0, 1, 3]
+#guard ("abc".findAllInfix "").all (·.isEmpty)
+#guard ("".toSlice.containsInfix "")
+#guard ("".findInfix? "a").isNone
+
+/-! ### Matches are slices of the input -/
+
+#guard ("xyxyyxxyx".findAllInfix "xyx").map (·.copy) == #["xyx", "xyx"]
+#guard ("aéb aéb".findAllInfix "éb").map (·.startInclusive.offset.byteIdx) == #[1, 6]
+#guard ("aéb aéb".findInfix? "éb").map (·.copy) == some "éb"
