@@ -457,18 +457,3 @@ theorem Array.Matcher.next?_list_length_lt [BEq α] {m : Matcher α} {l t : List
   cases xs with
   | nil => contradiction
   | cons => simp
-
-theorem Std.Stream.Reads.bsize_lt {s t : Substring.Raw} (h : Reads s xs t) (hne : xs ≠ []) :
-    t.bsize < s.bsize := by
-  induction h with
-  | nil => contradiction
-  | @cons s x s' xs t h₁ h₂ ih =>
-    have h₁ : s'.bsize < s.bsize := next_of_next?_eq_some h₁
-    cases xs with
-    | nil => cases h₂; exact h₁
-    | cons => exact Nat.lt_trans (ih (by simp)) h₁
-
-theorem Array.Matcher.next?_substring_bsize_lt {m : Matcher Char}
-    {s t : Substring.Raw} (h : m.next? s = some (t, m')) : t.bsize < s.bsize := by
-  obtain ⟨xs, hne, hr, -⟩ := next?_eq_some h
-  exact hr.bsize_lt hne
