@@ -81,7 +81,7 @@ structure Matcher (α) where
   state : Fin (table.size + 1) := 0
 
 /-- Make a KMP matcher for a given pattern array -/
-def Matcher.ofArray [BEq α] (pat : Array α) : Matcher α where
+@[expose] def Matcher.ofArray [BEq α] (pat : Array α) : Matcher α where
   table := mkPrefixTable pat
 
 /-- Make a KMP matcher for a given a pattern stream -/

@@ -35,60 +35,66 @@ structure Matcher (α : Type _) extends Array.Matcher α where
   pattern : List α
 
 /-- Make KMP matcher from list pattern. -/
-@[inline] def Matcher.ofList [BEq α] (pattern : List α) : Matcher α where
-  toMatcher := Array.Matcher.ofStream pattern
+@[expose, inline] def Matcher.ofList [BEq α] (pattern : List α) : Matcher α where
+  toMatcher := Array.Matcher.ofArray pattern.toArray
   pattern := pattern
-
-/-- List stream that keeps count of items read. -/
-local instance (α) : Std.Stream (List α × Nat) α where
-  next?
-  | ([], _) => none
-  | (x::xs, n) => (x, xs, n+1)
 
 /--
 Find all start and end positions of all infix sublists of `l` matching `m.pattern`.
 The sublists may be overlapping.
 -/
-partial def Matcher.findAll [BEq α] (m : Matcher α) (l : List α) : Array (Nat × Nat) :=
+@[expose] def Matcher.findAll [BEq α] (m : Matcher α) (l : List α) : Array (Nat × Nat) :=
   if m.pattern.isEmpty then
     Array.range (l.length + 1) |>.map fun i => (i, i)
   else
-    loop (l, 0) m.toMatcher #[]
+    loop l 0 m.state #[]
 where
   /-- Accumulator loop for `List.Matcher.findAll` -/
-  loop (l : List α × Nat) (am : Array.Matcher α) (occs : Array (Nat × Nat)) : Array (Nat × Nat) :=
-    match am.next? l with
-    | none => occs
-    | some (l, am) => loop l am (occs.push (l.snd - m.table.size, l.snd))
+  loop : List α → Nat → Fin (m.table.size + 1) → Array (Nat × Nat) → Array (Nat × Nat)
+    | [], _, _, occs => occs
+    | x :: xs, n, k, occs =>
+      let k := m.table.step x k
+      if k.val = m.table.size then
+        loop xs (n + 1) k (occs.push (n + 1 - m.table.size, n + 1))
+      else
+        loop xs (n + 1) k occs
 
 /--
 Find the start and end positions of the first infix sublist of `l` matching `m.pattern`,
 or `none` if there is no such sublist.
 -/
-def Matcher.find? [BEq α] (m : Matcher α) (l : List α) : Option (Nat × Nat) :=
+@[expose] def Matcher.find? [BEq α] (m : Matcher α) (l : List α) : Option (Nat × Nat) :=
   if m.pattern.isEmpty then
     some (0, 0)
   else
-    match m.next? (l, 0) with
-    | none => none
-    | some (l, _) => some (l.snd - m.table.size, l.snd)
+    loop l 0 m.state
+where
+  /-- Search loop for `List.Matcher.find?` -/
+  loop : List α → Nat → Fin (m.table.size + 1) → Option (Nat × Nat)
+    | [], _, _ => none
+    | x :: xs, n, k =>
+      let k := m.table.step x k
+      if k.val = m.table.size then
+        some (n + 1 - m.table.size, n + 1)
+      else
+        loop xs (n + 1) k
 
 /--
 Returns all the start and end positions of all infix sublists of `l` that match `pattern`.
 The sublists may be overlapping.
 -/
-@[inline] def findAllInfix [BEq α] (l pattern : List α) : Array (Nat × Nat) :=
+@[expose, inline] def findAllInfix [BEq α] (l pattern : List α) : Array (Nat × Nat) :=
   (Matcher.ofList pattern).findAll l
 
 /--
 Returns the start and end positions of the first infix sublist of `l` that matches `pattern`,
 or `none` if there is no such sublist.
 -/
-@[inline] def findInfix? [BEq α] (l pattern : List α) : Option (Nat × Nat) :=
+@[expose, inline] def findInfix? [BEq α] (l pattern : List α) : Option (Nat × Nat) :=
   (Matcher.ofList pattern).find? l
 
 /--
 Returns true iff `pattern` occurs as an infix sublist of `l`.
 -/
-@[inline] def containsInfix [BEq α] (l pattern : List α) : Bool :=
+@[expose, inline] def containsInfix [BEq α] (l pattern : List α) : Bool :=
   findInfix? l pattern |>.isSome
