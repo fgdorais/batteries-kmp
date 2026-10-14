@@ -6,16 +6,40 @@ Authors: François G. Dorais
 module
 
 public import BatteriesKMP.Array
-public import Batteries.Data.String.Basic
 
 public section
 
-theorem Array.Matcher.next?_substring_bsize_lt {m : Matcher Char} {s t : Substring.Raw}
-    (h : m.next? s = some (t, m')) : t.bsize < s.bsize := by
-  replace h := next?_transGen h
+namespace String.Slice
+
+/-- Stream of the characters of a slice `s`, starting from a position in `s`. -/
+instance (s : Slice) : Std.Stream s.Pos Char where
+  next? p := if h : p = s.endPos then none else some (p.get h, p.next h)
+
+theorem Pos.byteIdx_offset_le {s : Slice} (p : s.Pos) : p.offset.byteIdx ≤ s.utf8ByteSize :=
+  p.isValidForSlice.le_utf8ByteSize
+
+instance (s : Slice) : Std.Stream.WellFounded s.Pos Char :=
+  .ofMeasure (fun p => s.utf8ByteSize - p.offset.byteIdx) <| by
+    intro p q _ h
+    simp only [Std.Stream.next?] at h
+    split at h
+    · contradiction
+    · next hp =>
+      cases h
+      have := Pos.byteIdx_offset_le (p.next hp)
+      rw [Pos.byteIdx_offset_next] at this ⊢
+      have := Char.utf8Size_pos (p.get hp)
+      omega
+
+theorem next?_measure_lt {s : Slice} {m : Array.Matcher Char} {p q : s.Pos}
+    (h : m.next? p = some (q, m')) :
+    s.utf8ByteSize - q.offset.byteIdx < s.utf8ByteSize - p.offset.byteIdx := by
+  replace h := Array.Matcher.next?_transGen h
   induction h with
   | single h => exact h
   | tail _ h ih => exact Nat.lt_trans ih h
+
+end String.Slice
 
 namespace String
 
@@ -40,91 +64,102 @@ def m := Matcher.ofString "abba"
 -/
 structure Matcher extends Array.Matcher Char where
   /-- The pattern for the matcher -/
-  pattern : Substring.Raw
+  pattern : Slice
 
-/-- Make KMP matcher from pattern substring -/
-@[inline] def Matcher.ofSubstring (pattern : Substring.Raw) : Matcher where
-  toMatcher := Array.Matcher.ofStream pattern
+/-- Make KMP matcher from pattern slice -/
+@[inline] def Matcher.ofSlice (pattern : Slice) : Matcher where
+  toMatcher := Array.Matcher.ofStream pattern.startPos
   pattern := pattern
 
 /-- Make KMP matcher from pattern string -/
 @[inline] def Matcher.ofString (pattern : String) : Matcher :=
-  Matcher.ofSubstring pattern
+  Matcher.ofSlice pattern
 
 /-- The byte size of the string pattern for the matcher -/
-abbrev Matcher.patternSize (m : Matcher) : Nat := m.pattern.bsize
+abbrev Matcher.patternSize (m : Matcher) : Nat := m.pattern.utf8ByteSize
 
-/-- Find all substrings of `s` matching `m.pattern`. -/
-def Matcher.findAll (m : Matcher) (s : Substring.Raw) : Array Substring.Raw :=
-  if m.pattern.isEmpty then
-    boundaries s #[]
+/-- The slice of `s` of byte size `m.patternSize` that ends at `stop`, if there is one. -/
+def Matcher.sliceEndingAt? (m : Matcher) (s : Slice) (stop : s.Pos) : Option Slice :=
+  (s.pos? ⟨stop.offset.byteIdx - m.patternSize⟩).bind fun start =>
+    if h : start ≤ stop then some (s.slice start stop h) else none
+
+/-- Find all slices of `s` matching `m.pattern`. -/
+def Matcher.findAll (m : Matcher) (s : Slice) : Array Slice :=
+  if m.patternSize = 0 then
+    boundaries s.startPos #[]
   else
-    loop s m.toMatcher #[]
+    loop s.startPos m.toMatcher #[]
 where
-  /-- Empty substrings at every character boundary of `s`, for an empty pattern. -/
-  boundaries (s : Substring.Raw) (occs : Array Substring.Raw) : Array Substring.Raw :=
-    let occs := occs.push { s with stopPos := s.startPos }
-    match _h : Std.Stream.next? s with
+  /-- Empty slices at every character boundary of `s`, for an empty pattern. -/
+  boundaries (p : s.Pos) (occs : Array Slice) : Array Slice :=
+    let occs := occs.push (s.slice p p (Slice.Pos.le_refl p))
+    match _h : Std.Stream.next? p with
     | none => occs
-    | some (_, s) => boundaries s occs
-  termination_by s
+    | some (_, p) => boundaries p occs
+  termination_by s.utf8ByteSize - p.offset.byteIdx
+  decreasing_by exact Std.Stream.next_of_next?_eq_some _h
   /-- Accumulator loop for `String.Matcher.findAll` -/
-  loop (s : Substring.Raw) (am : Array.Matcher Char) (occs : Array Substring.Raw) :
-      Array Substring.Raw :=
-    match h : am.next? s with
+  loop (p : s.Pos) (am : Array.Matcher Char) (occs : Array Slice) : Array Slice :=
+    match h : am.next? p with
     | none => occs
-    | some (s', am') =>
-      have := Array.Matcher.next?_substring_bsize_lt h
-      loop s' am' <| occs.push { s' with
-        startPos := ⟨s'.startPos.byteIdx - m.patternSize⟩
-        stopPos := s'.startPos }
-  termination_by s.bsize
+    | some (p', am') =>
+      have := Slice.next?_measure_lt h
+      loop p' am' <| match m.sliceEndingAt? s p' with
+        | some r => occs.push r
+        | none => occs
+  termination_by s.utf8ByteSize - p.offset.byteIdx
 
-/-- Find the first substring of `s` matching `m.pattern`, or `none` if no such substring exists. -/
-def Matcher.find? (m : Matcher) (s : Substring.Raw) : Option Substring.Raw :=
-  if m.pattern.isEmpty then
-    some { s with stopPos := s.startPos }
+/-- Find the first slice of `s` matching `m.pattern`, or `none` if no such slice exists. -/
+def Matcher.find? (m : Matcher) (s : Slice) : Option Slice :=
+  if m.patternSize = 0 then
+    some (s.slice s.startPos s.startPos (Slice.Pos.le_refl _))
   else
-    match m.next? s with
+    loop s.startPos m.toMatcher
+where
+  /-- Search loop for `String.Matcher.find?` -/
+  loop (p : s.Pos) (am : Array.Matcher Char) : Option Slice :=
+    match h : am.next? p with
     | none => none
-    | some (s, _) =>
-      some { s with
-        startPos := ⟨s.startPos.byteIdx - m.patternSize⟩
-        stopPos := s.startPos }
+    | some (p', am') =>
+      have := Slice.next?_measure_lt h
+      match m.sliceEndingAt? s p' with
+      | some r => some r
+      | none => loop p' am'
+  termination_by s.utf8ByteSize - p.offset.byteIdx
 
 end String
 
-namespace Substring.Raw
+namespace String.Slice
 
 /--
-Returns all the substrings of `s` that match `pattern`.
+Returns all the slices of `s` that match `pattern`.
 -/
-@[inline] def findAllSubstr (s pattern : Substring.Raw) : Array Substring.Raw :=
-  (String.Matcher.ofSubstring pattern).findAll s
+@[inline] def findAllSubstr (s pattern : Slice) : Array Slice :=
+  (String.Matcher.ofSlice pattern).findAll s
 
 /--
-Returns the first substring of `s` that matches `pattern`,
-or `none` if there is no such substring.
+Returns the first slice of `s` that matches `pattern`,
+or `none` if there is no such slice.
 -/
-@[inline] def findSubstr? (s pattern : Substring.Raw) : Option Substring.Raw :=
-  (String.Matcher.ofSubstring pattern).find? s
+@[inline] def findSubstr? (s pattern : Slice) : Option Slice :=
+  (String.Matcher.ofSlice pattern).find? s
 
 /--
-Returns true iff `pattern` occurs as a substring of `s`.
+Returns true iff `pattern` occurs as a slice of `s`.
 -/
-@[inline] def containsSubstr (s pattern : Substring.Raw) : Bool :=
+@[inline] def containsSubstr (s pattern : Slice) : Bool :=
   s.findSubstr? pattern |>.isSome
 
-end Substring.Raw
+end String.Slice
 
 namespace String
 
-@[inherit_doc Substring.Raw.findAllSubstr]
-abbrev findAllSubstr (s : String) (pattern : Substring.Raw) : Array Substring.Raw :=
-  (String.Matcher.ofSubstring pattern).findAll s
+@[inherit_doc Slice.findAllSubstr]
+abbrev findAllSubstr (s : String) (pattern : Slice) : Array Slice :=
+  s.toSlice.findAllSubstr pattern
 
-@[inherit_doc Substring.Raw.findSubstr?]
-abbrev findSubstr? (s : String) (pattern : Substring.Raw) : Option Substring.Raw :=
-  s.toRawSubstring.findSubstr? pattern
+@[inherit_doc Slice.findSubstr?]
+abbrev findSubstr? (s : String) (pattern : Slice) : Option Slice :=
+  s.toSlice.findSubstr? pattern
 
 end String

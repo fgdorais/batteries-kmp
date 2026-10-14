@@ -27,11 +27,17 @@ def m := String.Matcher.ofString "abba"
 
 /-! ### Empty patterns match at every character boundary -/
 
-#guard ("".findSubstr? "").map (·.startPos.byteIdx) == some 0
-#guard ("abc".findSubstr? "").map (·.startPos.byteIdx) == some 0
-#guard ("".findAllSubstr "").map (·.startPos.byteIdx) == #[0]
-#guard ("abc".findAllSubstr "").map (·.startPos.byteIdx) == #[0, 1, 2, 3]
-#guard ("aé".findAllSubstr "").map (·.startPos.byteIdx) == #[0, 1, 3]
+#guard ("".findSubstr? "").map (·.startInclusive.offset.byteIdx) == some 0
+#guard ("abc".findSubstr? "").map (·.startInclusive.offset.byteIdx) == some 0
+#guard ("".findAllSubstr "").map (·.startInclusive.offset.byteIdx) == #[0]
+#guard ("abc".findAllSubstr "").map (·.startInclusive.offset.byteIdx) == #[0, 1, 2, 3]
+#guard ("aé".findAllSubstr "").map (·.startInclusive.offset.byteIdx) == #[0, 1, 3]
 #guard ("abc".findAllSubstr "").all (·.isEmpty)
-#guard ("".toRawSubstring.containsSubstr "")
+#guard ("".toSlice.containsSubstr "")
 #guard ("".findSubstr? "a").isNone
+
+/-! ### Matches are slices of the input -/
+
+#guard ("xyxyyxxyx".findAllSubstr "xyx").map (·.copy) == #["xyx", "xyx"]
+#guard ("aéb aéb".findAllSubstr "éb").map (·.startInclusive.offset.byteIdx) == #[1, 6]
+#guard ("aéb aéb".findSubstr? "éb").map (·.copy) == some "éb"
