@@ -67,7 +67,7 @@ structure Matcher extends KMP.Matcher Char where
   pattern : Slice
 
 /-- Make KMP matcher from pattern string -/
-@[inline] def Matcher.ofString (pattern : Slice) : Matcher where
+@[expose, inline] def Matcher.ofString (pattern : Slice) : Matcher where
   toMatcher := KMP.Matcher.ofStream pattern.startPos
   pattern := pattern
 
@@ -75,12 +75,12 @@ structure Matcher extends KMP.Matcher Char where
 abbrev Matcher.patternSize (m : Matcher) : Nat := m.pattern.utf8ByteSize
 
 /-- The slice of `s` of byte size `m.patternSize` that ends at `stop`, if there is one. -/
-def Matcher.sliceEndingAt? (m : Matcher) (s : Slice) (stop : s.Pos) : Option Slice :=
+@[expose] def Matcher.sliceEndingAt? (m : Matcher) (s : Slice) (stop : s.Pos) : Option Slice :=
   (s.pos? ⟨stop.offset.byteIdx - m.patternSize⟩).bind fun start =>
     if h : start ≤ stop then some (s.slice start stop h) else none
 
 /-- Find all slices of `s` matching `m.pattern`. -/
-def Matcher.findAll (m : Matcher) (s : Slice) : Array Slice :=
+@[expose] def Matcher.findAll (m : Matcher) (s : Slice) : Array Slice :=
   if m.patternSize = 0 then
     boundaries s.startPos #[]
   else
@@ -106,7 +106,7 @@ where
   termination_by s.utf8ByteSize - p.offset.byteIdx
 
 /-- Find the first slice of `s` matching `m.pattern`, or `none` if no such slice exists. -/
-def Matcher.find? (m : Matcher) (s : Slice) : Option Slice :=
+@[expose] def Matcher.find? (m : Matcher) (s : Slice) : Option Slice :=
   if m.patternSize = 0 then
     some (s.slice s.startPos s.startPos (Slice.Pos.le_refl _))
   else
@@ -128,20 +128,20 @@ namespace Slice
 /--
 Returns all the slices of `s` that match `pattern`.
 -/
-@[inline] def findAllInfix (s pattern : Slice) : Array Slice :=
+@[expose, inline] def findAllInfix (s pattern : Slice) : Array Slice :=
   (String.Matcher.ofString pattern).findAll s
 
 /--
 Returns the first slice of `s` that matches `pattern`,
 or `none` if there is no such slice.
 -/
-@[inline] def findInfix? (s pattern : Slice) : Option Slice :=
+@[expose, inline] def findInfix? (s pattern : Slice) : Option Slice :=
   (String.Matcher.ofString pattern).find? s
 
 /--
 Returns true iff `pattern` occurs as a slice of `s`.
 -/
-@[inline] def containsInfix (s pattern : Slice) : Bool :=
+@[expose, inline] def containsInfix (s pattern : Slice) : Bool :=
   s.findInfix? pattern |>.isSome
 
 end Slice
