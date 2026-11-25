@@ -10,7 +10,7 @@ name = "BatteriesKMPTest"
 [[require]]
 name = "batteries"
 git = "https://github.com/leanprover-community/batteries"
-rev = "cell-network"
+rev = "main"
 
 [[require]]
 name = "batteries-finite-streams"
