@@ -11,3 +11,18 @@ concurrency:
 jobs:
   run-ci:
     uses: ./.github/workflows/build.yml
+
+  auto-merge-toolchain-update:
+    needs: run-ci
+    if: >-
+      github.head_ref == 'update-main-toolchain' &&
+      github.base_ref == 'main' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge toolchain update
+        env:
+          GH_TOKEN: ${{ secrets.BATTERIES_CELL_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: gh pr merge "$PR_URL" --squash --match-head-commit "$HEAD_SHA"
