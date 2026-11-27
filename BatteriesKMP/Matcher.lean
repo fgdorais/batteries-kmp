@@ -33,7 +33,7 @@ abbrev PrefixTable.size (t : PrefixTable α) := t.toArray.size
   `t.pattern[:t.step x len]`. If `len` is as large as possible then `t.step x len` will also be
   as large as possible.
 -/
-def PrefixTable.step [BEq α] (t : PrefixTable α) (x : α) : Fin (t.size+1) → Fin (t.size+1)
+@[expose] def PrefixTable.step [BEq α] (t : PrefixTable α) (x : α) : Fin (t.size+1) → Fin (t.size+1)
   | ⟨k, hk⟩ =>
     let cont := fun () =>
       match k with
@@ -54,7 +54,7 @@ termination_by k => k.val
 
   If `t` is the prefix table for `xs` then `t.extend x` is the prefix table for `xs.push x`.
 -/
-def PrefixTable.extend [BEq α] (t : PrefixTable α) (x : α) : PrefixTable α where
+@[expose] def PrefixTable.extend [BEq α] (t : PrefixTable α) (x : α) : PrefixTable α where
   toArray := t.toArray.push (x, t.step x ⟨t.size, Nat.lt_succ_self _⟩)
   valid _ := by
     rw [Array.getElem_push]
@@ -63,10 +63,10 @@ def PrefixTable.extend [BEq α] (t : PrefixTable α) (x : α) : PrefixTable α w
     · next h => exact Nat.le_trans (Nat.lt_succ_iff.1 <| Fin.isLt ..) (Nat.not_lt.1 h)
 
 /-- Make prefix table from a pattern array -/
-def mkPrefixTable [BEq α] (xs : Array α) : PrefixTable α := xs.foldl (·.extend) default
+@[expose] def mkPrefixTable [BEq α] (xs : Array α) : PrefixTable α := xs.foldl (·.extend) default
 
 /-- Make prefix table from a finite pattern stream -/
-def mkPrefixTableOfStream [BEq α] [Std.Stream.HasNextRelation σ α] (stream : σ)
+@[expose] def mkPrefixTableOfStream [BEq α] [Std.Stream.HasNextRelation σ α] (stream : σ)
     [Std.Stream.Finite stream] : PrefixTable α :=
   Std.Stream.Finite.foldl stream (·.extend) default
 
@@ -78,7 +78,7 @@ structure Matcher (α) where
   state : Fin (table.size + 1) := 0
 
 /-- Make a KMP matcher for a given finite pattern stream -/
-def Matcher.ofStream [BEq α] [Std.Stream.HasNextRelation σ α] (pat : σ)
+@[expose] def Matcher.ofStream [BEq α] [Std.Stream.HasNextRelation σ α] (pat : σ)
     [Std.Stream.Finite pat] : Matcher α where
   table := mkPrefixTableOfStream pat
 
@@ -87,7 +87,7 @@ def Matcher.ofStream [BEq α] [Std.Stream.HasNextRelation σ α] (pat : σ)
   Runs the stream until it reads a sequence that matches the sought pattern, then returns the stream
   state at that point and an updated matcher state.
 -/
-def Matcher.next? [BEq α] [Std.Stream.HasNextRelation σ α] (m : Matcher α) (stream : σ)
+@[expose] def Matcher.next? [BEq α] [Std.Stream.HasNextRelation σ α] (m : Matcher α) (stream : σ)
     [Std.Stream.Finite stream] : Option (σ × Matcher α) :=
   match h : Stream.next? stream with
   | none => none

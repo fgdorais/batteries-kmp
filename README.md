@@ -26,6 +26,13 @@ reused to search for the same pattern in many inputs.
 
 All occurrences are reported, including overlapping ones.
 
+The matchers are verified. `BatteriesKMP.Matcher.Lemmas` proves that the prefix tables and the
+automaton are correct and that `KMP.Matcher.next?` stops at the first match.
+`BatteriesKMP.Array.Lemmas`, `BatteriesKMP.List.Lemmas` and `BatteriesKMP.String.Lemmas` prove
+that `findAll` returns exactly the occurrences of the pattern in order, that `find?` returns the
+first one, and that `Array.containsInfix`, `List.containsInfix` and `String.Slice.containsInfix`
+decide whether the pattern occurs.
+
 ```lean
 import BatteriesKMP
 

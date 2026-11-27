@@ -42,7 +42,7 @@ structure Matcher (α : Type _) extends KMP.Matcher α where
   pattern : Array α
 
 /-- Make KMP matcher from array pattern. -/
-@[inline] def Matcher.ofArray [BEq α] (pattern : Array α) : Matcher α where
+@[expose, inline] def Matcher.ofArray [BEq α] (pattern : Array α) : Matcher α where
   table := KMP.mkPrefixTable pattern
   pattern := pattern
 
@@ -50,7 +50,7 @@ structure Matcher (α : Type _) extends KMP.Matcher α where
 Find all start and end positions of all infix subarrays of `xs` matching `m.pattern`.
 The subarrays may be overlapping.
 -/
-def Matcher.findAll [BEq α] (m : Matcher α) (xs : Array α) : Array (Nat × Nat) :=
+@[expose] def Matcher.findAll [BEq α] (m : Matcher α) (xs : Array α) : Array (Nat × Nat) :=
   if m.pattern.isEmpty then
     Array.range (xs.size + 1) |>.map fun i => (i, i)
   else
@@ -70,7 +70,7 @@ where
 Find the start and end positions of the first infix subarray of `xs` matching `m.pattern`,
 or `none` if there is no such subarray.
 -/
-def Matcher.find? [BEq α] (m : Matcher α) (xs : Array α) : Option (Nat × Nat) :=
+@[expose] def Matcher.find? [BEq α] (m : Matcher α) (xs : Array α) : Option (Nat × Nat) :=
   if m.pattern.isEmpty then
     some (0, 0)
   else
@@ -84,20 +84,20 @@ def Matcher.find? [BEq α] (m : Matcher α) (xs : Array α) : Option (Nat × Nat
 Returns all the start and end positions of all infix subarrays of `xs` that match `pattern`.
 The subarrays may be overlapping.
 -/
-@[inline] def findAllInfix [BEq α] (xs pattern : Array α) : Array (Nat × Nat) :=
+@[expose, inline] def findAllInfix [BEq α] (xs pattern : Array α) : Array (Nat × Nat) :=
   (Matcher.ofArray pattern).findAll xs
 
 /--
 Returns the start and end positions of the first infix subarray of `xs` that matches `pattern`,
 or `none` if there is no such subarray.
 -/
-@[inline] def findInfix? [BEq α] (xs pattern : Array α) : Option (Nat × Nat) :=
+@[expose, inline] def findInfix? [BEq α] (xs pattern : Array α) : Option (Nat × Nat) :=
   (Matcher.ofArray pattern).find? xs
 
 /--
 Returns true iff `pattern` occurs as an infix subarray of `xs`.
 -/
-@[inline] def containsInfix [BEq α] (xs pattern : Array α) : Bool :=
+@[expose, inline] def containsInfix [BEq α] (xs pattern : Array α) : Bool :=
   findInfix? xs pattern |>.isSome
 
 end Array

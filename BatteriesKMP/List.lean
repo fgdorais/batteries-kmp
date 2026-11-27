@@ -42,7 +42,7 @@ structure Matcher (α : Type _) extends KMP.Matcher α where
   pattern : List α
 
 /-- Make KMP matcher from list pattern. -/
-@[inline] def Matcher.ofList [BEq α] (pattern : List α) : Matcher α where
+@[expose, inline] def Matcher.ofList [BEq α] (pattern : List α) : Matcher α where
   toMatcher := KMP.Matcher.ofStream pattern
   pattern := pattern
 
@@ -50,7 +50,7 @@ structure Matcher (α : Type _) extends KMP.Matcher α where
 Find all start and end positions of all infix sublists of `l` matching `m.pattern`.
 The sublists may be overlapping.
 -/
-def Matcher.findAll [BEq α] (m : Matcher α) (l : List α) : Array (Nat × Nat) :=
+@[expose] def Matcher.findAll [BEq α] (m : Matcher α) (l : List α) : Array (Nat × Nat) :=
   if m.pattern.isEmpty then
     Array.range (l.length + 1) |>.map fun i => (i, i)
   else
@@ -70,7 +70,7 @@ where
 Find the start and end positions of the first infix sublist of `l` matching `m.pattern`,
 or `none` if there is no such sublist.
 -/
-def Matcher.find? [BEq α] (m : Matcher α) (l : List α) : Option (Nat × Nat) :=
+@[expose] def Matcher.find? [BEq α] (m : Matcher α) (l : List α) : Option (Nat × Nat) :=
   if m.pattern.isEmpty then
     some (0, 0)
   else
@@ -84,18 +84,18 @@ def Matcher.find? [BEq α] (m : Matcher α) (l : List α) : Option (Nat × Nat) 
 Returns all the start and end positions of all infix sublists of `l` that match `pattern`.
 The sublists may be overlapping.
 -/
-@[inline] def findAllInfix [BEq α] (l pattern : List α) : Array (Nat × Nat) :=
+@[expose, inline] def findAllInfix [BEq α] (l pattern : List α) : Array (Nat × Nat) :=
   (Matcher.ofList pattern).findAll l
 
 /--
 Returns the start and end positions of the first infix sublist of `l` that matches `pattern`,
 or `none` if there is no such sublist.
 -/
-@[inline] def findInfix? [BEq α] (l pattern : List α) : Option (Nat × Nat) :=
+@[expose, inline] def findInfix? [BEq α] (l pattern : List α) : Option (Nat × Nat) :=
   (Matcher.ofList pattern).find? l
 
 /--
 Returns true iff `pattern` occurs as an infix sublist of `l`.
 -/
-@[inline] def containsInfix [BEq α] (l pattern : List α) : Bool :=
+@[expose, inline] def containsInfix [BEq α] (l pattern : List α) : Bool :=
   findInfix? l pattern |>.isSome
