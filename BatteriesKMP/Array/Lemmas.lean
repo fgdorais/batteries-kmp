@@ -20,16 +20,16 @@ theorem Subarray.next?_toList (s : Subarray α) :
   split
   · next h =>
     simp only [Option.map_some, Subarray.toList_eq_drop_take]
-    rw [List.drop_eq_getElem_cons (by simp; omega)]
+    rw [List.drop_eq_getElem_cons (by simp; lia)]
     simp only [List.getElem_take, Array.getElem_toList]
     rfl
   · next h =>
-    have : s.toList = [] := by rw [Subarray.toList_eq_drop_take]; simp; omega
+    have : s.toList = [] := by rw [Subarray.toList_eq_drop_take]; simp; lia
     rw [this]; rfl
 
 theorem Subarray.length_toList_eq (s : Subarray α) : s.toList.length = s.stop - s.start := by
   have := s.stop_le_array_size
-  simp [Subarray.toList_eq_drop_take]; omega
+  simp [Subarray.toList_eq_drop_take]; lia
 
 theorem Std.Stream.Reads.subarray_stop {s t : Subarray α} (h : Reads s xs t) : t.stop = s.stop := by
   induction h with
@@ -77,7 +77,7 @@ theorem findAll_loop_eq [BEq α] (m : Matcher α) (xs : Array α) (rest : Subarr
     have hs' : rest'.stop = xs.size := by rw [next?_stop h, hs]
     have := rest'.start_le_stop
     have hj : xs.toList.length - rest'.toList.length = rest'.start := by
-      rw [Subarray.length_toList_eq, Array.length_toList]; omega
+      rw [Subarray.length_toList_eq, Array.length_toList]; lia
     rw [findAll_loop_eq m xs rest' hs']
     simp only [hj]
 termination_by rest.stop - rest.start
@@ -111,7 +111,7 @@ theorem find?_eq [BEq α] (m : Matcher α) (xs : Array α) :
       have hs : rest.stop = xs.size := by rw [next?_stop h]; simp
       have := rest.start_le_stop
       have hj : xs.toList.length - rest.toList.length = rest.start := by
-        rw [Subarray.length_toList_eq, Array.length_toList]; omega
+        rw [Subarray.length_toList_eq, Array.length_toList]; lia
       simp only [Option.map_some, hj]
 
 theorem toListMatcher_ofArray [BEq α] (p : Array α) :

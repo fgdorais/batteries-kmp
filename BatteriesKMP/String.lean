@@ -31,7 +31,7 @@ instance (s : Slice) : Std.Stream.WellFounded s.Pos Char :=
       have := Pos.byteIdx_offset_le (p.next hp)
       rw [Pos.byteIdx_offset_next] at this ⊢
       have := Char.utf8Size_pos (p.get hp)
-      omega
+      lia
 
 theorem next?_measure_lt {s : Slice} {m : KMP.Matcher Char} {p q : s.Pos}
     (h : m.next? p = some (q, m')) :

@@ -79,9 +79,9 @@ theorem findAll_loop_toList [BEq α] [LawfulBEq α] (m : Matcher α) (l : List �
     rw [List.filter_eq_nil_iff]
     intro j hj
     rw [List.mem_range'_1] at hj
-    obtain ⟨i, rfl⟩ : ∃ i, j = pre.length + i := ⟨j - pre.length, by omega⟩
-    rw [hiff i (by omega)]
-    exact hn i (by omega) (by omega)
+    obtain ⟨i, rfl⟩ : ∃ i, j = pre.length + i := ⟨j - pre.length, by lia⟩
+    rw [hiff i (by lia)]
+    exact hn i (by lia) (by lia)
   · next rest' am' h =>
     obtain ⟨xs, hne, hr, rfl, hacc, hmin⟩ := KMP.Matcher.next?_eq_some h
     have hrest := hr.list
@@ -94,24 +94,24 @@ theorem findAll_loop_toList [BEq α] [LawfulBEq α] (m : Matcher α) (l : List �
       | nil => contradiction
       | cons _ xs => exact ⟨xs.length, rfl⟩
     have hlen : rest.length = n + (1 + rest'.length) := by
-      rw [hrest, List.length_append]; omega
+      rw [hrest, List.length_append]; lia
     have hj : l.length - rest'.length = pre.length + (n + 1) := by
-      rw [hl, hrest]; simp; omega
+      rw [hl, hrest]; simp; lia
     have hlast : am.table.pattern.isSuffixOf (l.take (pre.length + (n + 1))) = true := by
-      rw [hiff (n + 1) (by omega), hrest, ← hn, List.take_left]; exact hacc
+      rw [hiff (n + 1) (by lia), hrest, ← hn, List.take_left]; exact hacc
     have hfirst : (List.range' (pre.length + 1) n).filter
         (fun j => am.table.pattern.isSuffixOf (l.take j)) = [] := by
       rw [List.filter_eq_nil_iff]
       intro j hj
       rw [List.mem_range'_1] at hj
-      obtain ⟨i, rfl⟩ : ∃ i, j = pre.length + i := ⟨j - pre.length, by omega⟩
-      rw [hiff i (by omega), hrest, List.take_append_of_le_length (by omega)]
-      exact hmin i (by omega) (by omega)
+      obtain ⟨i, rfl⟩ : ∃ i, j = pre.length + i := ⟨j - pre.length, by lia⟩
+      rw [hiff i (by lia), hrest, List.take_append_of_le_length (by lia)]
+      exact hmin i (by lia) (by lia)
     rw [hlen, ← List.range'_append, ← List.range'_append, List.filter_append,
       List.filter_append, hfirst, hj]
     simp only [List.length_append, hn]
-    have e1 : pre.length + 1 + 1 * n = pre.length + (n + 1) := by omega
-    have e2 : pre.length + (n + 1) + 1 * 1 = pre.length + (n + 1) + 1 := by omega
+    have e1 : pre.length + 1 + 1 * n = pre.length + (n + 1) := by lia
+    have e2 : pre.length + (n + 1) + 1 * 1 = pre.length + (n + 1) + 1 := by lia
     rw [e1, e2, List.range'_one, List.filter_cons]
     simp [hlast]
 termination_by rest.length
@@ -198,7 +198,7 @@ theorem findAllInfix_toList [BEq α] [LawfulBEq α] (l p : List α) :
   simp only [containsInfix, findInfix?_eq, Option.isSome_map, find?_isSome, mem_range,
     isSuffixOf_iff_suffix, infix_iff_exists_suffix_take]
   constructor
-  · rintro ⟨j, hj, h⟩; exact ⟨j, by omega, h⟩
-  · rintro ⟨j, hj, h⟩; exact ⟨j, by omega, h⟩
+  · rintro ⟨j, hj, h⟩; exact ⟨j, by lia, h⟩
+  · rintro ⟨j, hj, h⟩; exact ⟨j, by lia, h⟩
 
 end List

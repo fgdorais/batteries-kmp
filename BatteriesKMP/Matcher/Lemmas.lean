@@ -110,16 +110,16 @@ theorem take_suffix_take_concat_iff_of_border {p : List α} (hk : k ≤ p.length
     match j, hj with
     | 0, _ => simp
     | j + 1, hj =>
-      have hjp : j < p.length := by omega
+      have hjp : j < p.length := by lia
       rw [List.take_succ_eq_append_getElem hjp,
         suffix_append_inj_of_length_eq (s₁ := [p[j]]) (s₂ := [x]) rfl] at h
       rw [List.take_succ_eq_append_getElem hjp,
         suffix_append_inj_of_length_eq (s₁ := [p[j]]) (s₂ := [x]) rfl]
       refine ⟨?_, h.2⟩
-      have hjr : j ≤ r := hr.max j (by omega) h.1
+      have hjr : j ≤ r := hr.max j (by lia) h.1
       apply suffix_of_suffix_length_le h.1 hr.suffix
       simp only [length_take]
-      omega
+      lia
   · intro h
     apply h.trans
     rw [suffix_append_self_iff]
@@ -128,7 +128,7 @@ theorem take_suffix_take_concat_iff_of_border {p : List α} (hk : k ≤ p.length
 theorem length_le_of_take_suffix (hj : j ≤ p.length) (h : p.take j <:+ s) : j ≤ s.length := by
   have := h.length_le
   simp only [length_take] at this
-  omega
+  lia
 
 theorem isLongestPrefixSuffix_nil (p : List α) : IsLongestPrefixSuffix p [] p.length 0 where
   le := Nat.zero_le _
@@ -136,7 +136,7 @@ theorem isLongestPrefixSuffix_nil (p : List α) : IsLongestPrefixSuffix p [] p.l
   max j hj h := by
     have := length_le_of_take_suffix hj h
     simp only [length_nil] at this
-    omega
+    lia
 
 theorem IsLongestPrefixSuffix.eq_iff_suffix (h : IsLongestPrefixSuffix p s b n)
     (hb : b = p.length) : n = b ↔ p <:+ s := by
@@ -148,7 +148,7 @@ theorem IsLongestPrefixSuffix.eq_iff_suffix (h : IsLongestPrefixSuffix p s b n)
   · intro hs
     have := h.max p.length (Nat.le_refl _) (by rwa [take_length])
     have := h.le
-    omega
+    lia
 
 /--
 Transition step of the KMP automaton: if `p.take k` is the longest prefix of `p` that is a suffix
@@ -163,16 +163,16 @@ theorem take_suffix_concat_iff_of_isLongestPrefixSuffix
     match j, hj with
     | 0, _ => simp
     | j + 1, hj =>
-      have hjp : j < p.length := by omega
+      have hjp : j < p.length := by lia
       rw [List.take_succ_eq_append_getElem hjp,
         suffix_append_inj_of_length_eq (s₁ := [p[j]]) (s₂ := [x]) rfl] at hs
       rw [List.take_succ_eq_append_getElem hjp,
         suffix_append_inj_of_length_eq (s₁ := [p[j]]) (s₂ := [x]) rfl]
       refine ⟨?_, hs.2⟩
-      have hjk : j ≤ k := h.max j (by omega) hs.1
+      have hjk : j ≤ k := h.max j (by lia) hs.1
       apply suffix_of_suffix_length_le hs.1 h.suffix
       simp only [length_take]
-      omega
+      lia
   · intro hs
     apply hs.trans
     rw [suffix_append_self_iff]
@@ -185,7 +185,7 @@ theorem isLongestPrefixSuffix_take_succ {p : List α} (hk : k < p.length) :
   max j hj h := by
     have := length_le_of_take_suffix hj h
     simp only [length_append, length_take, length_cons, length_nil] at this
-    omega
+    lia
 
 theorem le_of_take_suffix_take_concat {p : List α} (hk : k ≤ p.length)
     (hx : ∀ h : k < p.length, p[k] ≠ x) (hj : j ≤ p.length)
@@ -194,13 +194,13 @@ theorem le_of_take_suffix_take_concat {p : List α} (hk : k ≤ p.length)
   simp only [length_append, length_take, length_cons, length_nil] at this
   if hjk : j = k + 1 then
     subst hjk
-    have hk' : k < p.length := by omega
+    have hk' : k < p.length := by lia
     rw [List.take_succ_eq_append_getElem hk',
       suffix_append_inj_of_length_eq (s₁ := [p[k]]) (s₂ := [x]) rfl] at h
     simp only [cons.injEq, and_true] at h
     exact absurd h.2 (hx hk')
   else
-    omega
+    lia
 
 end List
 
@@ -255,16 +255,16 @@ theorem step_spec [BEq α] [LawfulBEq α] {t : PrefixTable α} (ht : t.IsValid) 
   if hx : ∃ h : k < t.size, t.toArray[k].1 = x then
     obtain ⟨hsz, hx⟩ := hx
     rw [step_of_beq t hsz (beq_iff_eq.2 hx.symm)]
-    have := List.isLongestPrefixSuffix_take_succ (p := t.pattern) (by omega : k < _)
+    have := List.isLongestPrefixSuffix_take_succ (p := t.pattern) (by lia : k < _)
     rwa [getElem_pattern, hx, hp] at this
   else
     have hx' : ∀ h : k < t.pattern.length, t.pattern[k] ≠ x := by
-      intro h h'; rw [getElem_pattern] at h'; exact hx ⟨by omega, h'⟩
+      intro h h'; rw [getElem_pattern] at h'; exact hx ⟨by lia, h'⟩
     match k, hk, ih, hx, hx' with
     | 0, _, _, hx, hx' =>
       rw [step_zero_of_not_beq t fun h => beq_eq_false_iff_ne.2 fun h' => hx ⟨h, h'.symm⟩]
       refine ⟨Nat.zero_le _, by simp, fun j hj h => ?_⟩
-      exact List.le_of_take_suffix_take_concat (by omega) hx' (by omega) h
+      exact List.le_of_take_suffix_take_concat (by lia) hx' (by lia) h
     | k + 1, hk, ih, hx, hx' =>
       rw [step_succ_of_not_beq t hk fun h => beq_eq_false_iff_ne.2 fun h' => hx ⟨h, h'.symm⟩]
       have h2 : k < t.size := Nat.lt_of_succ_lt_succ hk
@@ -275,16 +275,16 @@ theorem step_spec [BEq α] [LawfulBEq α] {t : PrefixTable α} (ht : t.IsValid) 
       intro j hj
       refine Iff.symm ?_
       show _ ↔ t.pattern.take j <:+ t.pattern.take t.toArray[k].2 ++ [x]
-      have hk1 : k + 1 ≤ t.pattern.length := by omega
+      have hk1 : k + 1 ≤ t.pattern.length := by lia
       constructor
       · intro h
-        have hjk := List.le_of_take_suffix_take_concat hk1 hx' (by omega) h
+        have hjk := List.le_of_take_suffix_take_concat hk1 hx' (by lia) h
         exact (List.take_suffix_take_concat_iff_of_border hk1 hr hjk).1 h
       · intro h
-        have := List.length_le_of_take_suffix (by omega) h
+        have := List.length_le_of_take_suffix (by lia) h
         simp only [List.length_append, List.length_take, List.length_cons,
           List.length_nil] at this
-        exact (List.take_suffix_take_concat_iff_of_border hk1 hr (by omega)).2 h
+        exact (List.take_suffix_take_concat_iff_of_border hk1 hr (by lia)).2 h
 
 @[simp] theorem pattern_extend [BEq α] (t : PrefixTable α) (x : α) :
     (t.extend x).pattern = t.pattern ++ [x] := by
@@ -300,7 +300,7 @@ theorem IsValid.extend [BEq α] [LawfulBEq α] {t : PrefixTable α} (ht : t.IsVa
   intro i hi
   have hp := t.length_pattern
   have htake : ∀ j ≤ t.size, (t.pattern ++ [x]).take j = t.pattern.take j := by
-    intro j hj; rw [List.take_append_of_le_length (by omega)]
+    intro j hj; rw [List.take_append_of_le_length (by lia)]
   have hi2 : i < t.size + 1 := by simpa [PrefixTable.extend, size] using hi
   have hs : t.size = t.toArray.size := rfl
   rw [pattern_extend]
@@ -308,10 +308,10 @@ theorem IsValid.extend [BEq α] [LawfulBEq α] {t : PrefixTable α} (ht : t.IsVa
   rw [Array.getElem_push]
   split
   · next hi' =>
-    rw [htake _ (by omega)]
-    exact (ht i hi').of_take_eq fun j hj => (htake j (by omega)).symm
+    rw [htake _ (by lia)]
+    exact (ht i hi').of_take_eq fun j hj => (htake j (by lia)).symm
   · next hi' =>
-    have hi : i = t.size := by omega
+    have hi : i = t.size := by lia
     subst hi
     have := step_spec ht x ⟨t.size, Nat.lt_succ_self _⟩
     rw [show t.pattern.take t.size = t.pattern by rw [← hp, List.take_length]] at this
@@ -347,7 +347,7 @@ theorem step_isLongestPrefixSuffix [BEq α] [LawfulBEq α] {t : PrefixTable α} 
   have hp := t.length_pattern
   apply (step_spec ht x k).congr
   intro j hj
-  exact (List.take_suffix_concat_iff_of_isLongestPrefixSuffix h (by omega) (by omega)).symm
+  exact (List.take_suffix_concat_iff_of_isLongestPrefixSuffix h (by lia) (by lia)).symm
 
 theorem foldl_step_isLongestPrefixSuffix [BEq α] [LawfulBEq α] {t : PrefixTable α}
     (ht : t.IsValid) {k : Fin (t.size + 1)} (h : List.IsLongestPrefixSuffix t.pattern s t.size k)
@@ -437,14 +437,14 @@ theorem next?_eq_some [BEq α] [HasNextRelation σ α] {m : Matcher α} {s : σ}
     split at h
     · next hst =>
       cases h
-      exact ⟨[x], by simp, .cons hs (.nil _), rfl, hst, fun i hi hi' => by simp at hi'; omega⟩
+      exact ⟨[x], by simp, .cons hs (.nil _), rfl, hst, fun i hi hi' => by simp at hi'; lia⟩
     · next hst =>
       obtain ⟨xs, hne, hr, rfl, hsz, hmin⟩ := next?_eq_some h
       refine ⟨x :: xs, by simp, .cons hs hr, rfl, hsz, fun i hi hi' => ?_⟩
       match i with
       | 1 => exact hst
       | j + 2 =>
-        have := hmin (j + 1) (by omega) (by simp at hi'; omega)
+        have := hmin (j + 1) (by lia) (by simp at hi'; lia)
         simpa [List.take_succ_cons] using this
 termination_by Finite.wrap s
 
@@ -457,7 +457,7 @@ theorem next?_eq_none [BEq α] [HasNextRelation σ α] {m : Matcher α} {s : σ}
   · next hs =>
     rw [Finite.toList_none hs]
     intro i hi hi'
-    simp at hi'; omega
+    simp at hi'; lia
   · next x s' hs =>
     have : Std.Stream.Finite s' := .ofSome hs
     dsimp only at h
@@ -470,7 +470,7 @@ theorem next?_eq_none [BEq α] [HasNextRelation σ α] {m : Matcher α} {s : σ}
       match i with
       | 1 => simpa using hst
       | j + 2 =>
-        have := ih (j + 1) (by omega) (by simp at hi'; omega)
+        have := ih (j + 1) (by lia) (by simp at hi'; lia)
         simpa [List.take_succ_cons] using this
 termination_by Finite.wrap s
 
